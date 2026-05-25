@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSC - Dashboard</title>
+</head>
+<body>
+    <h1>Chess Club Dashboard</h1>
+    <div id="userInfo">Loading user data...</div>
+    <button id="logoutBtn" style="display:none;">Logout</button>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', checkAuthAndLoadProfile);
+    </script>
+</body>
+</html>

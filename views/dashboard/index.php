@@ -65,3 +65,9 @@
         <?php endforeach; ?>
     </div>
 </div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">Membri (Ajax)</div>
+    <div id="api-live-content" class="card-body">Se incarca...</div>
+</div>
+<script src="assets/js/microservices.js"></script>

@@ -1,13 +1,6 @@
 <?php
 
-/**
- * Gateway Web Micro-services
- * Fiecare modul (plugin) expune date prin acest endpoint JSON.
- * Exemple:
- *   api/microservices.php?service=members&action=list
- *   api/microservices.php?service=members&action=profile&id=1
- *   api/microservices.php?service=competitions&action=participations&competition_id=1
- */
+// API JSON: ?service=members&action=list
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -27,7 +20,7 @@ $action = $_GET['action'] ?? 'list';
 $plugin = PluginManager::findByService($service);
 if (!$plugin) {
     http_response_code(404);
-    echo json_encode(['error' => 'Micro-service not found']);
+    echo json_encode(['error' => 'Serviciu negasit']);
     exit;
 }
 
@@ -64,7 +57,7 @@ try {
             break;
 
         default:
-            $result = ['plugin' => $plugin->getName(), 'message' => 'Service available via web UI'];
+            $result = ['plugin' => $plugin->getName(), 'message' => 'Foloseste interfata web'];
     }
 
     echo json_encode([

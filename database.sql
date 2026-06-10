@@ -1,5 +1,4 @@
--- eSC - Chess Club Manager
--- Script complet pentru crearea bazei de date SQLite de la zero
+-- eSC - schema SQLite
 
 PRAGMA foreign_keys = ON;
 

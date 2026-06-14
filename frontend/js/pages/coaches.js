@@ -1,0 +1,130 @@
+window.pages.coaches = {
+    async render(sub) {
+        if (sub[0] === 'form') return this.showForm(sub[1]);
+        return this.showList();
+    },
+
+    async showList() {
+        const res = await api.get('/coaches');
+        const coaches = res.data;
+        document.getElementById('page-content').innerHTML = `
+            ${pageHeader('Antrenori', 'Gestioneaza antrenorii si colaboratorii', `<a href="#/coaches/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
+            ${renderTable(['Nume','Email','Rol','Actiuni'], coaches, c => `
+                <tr>
+                    <td><strong>${escapeHtml(c.nume)}</strong></td>
+                    <td>${escapeHtml(c.email)}</td>
+                    <td>${escapeHtml(c.rol)}</td>
+                    <td class="actions">
+                        <a href="#/coaches/form/${c.id}" class="btn btn-secondary btn-sm">Edit</a>
+                        <button class="btn btn-danger btn-sm" data-delete="${c.id}">Sterge</button>
+                    </td>
+                </tr>`)}
+        `;
+        document.querySelectorAll('[data-delete]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirmAction('Stergeti?')) return;
+                await api.delete('/coaches/' + btn.dataset.delete);
+                showAlert('Sters.', 'success');
+                this.showList();
+            });
+        });
+    },
+
+    async showForm(id) {
+        let coach = { nume:'', email:'', telefon:'', specializare:'', disponibilitate:'', rol:'antrenor' };
+        if (id) {
+            const res = await api.get('/coaches/' + id);
+            coach = res.data;
+        }
+        document.getElementById('page-content').innerHTML = `
+            ${pageHeader(id ? 'Editare' : 'Antrenor nou', '', `<a href="#/coaches" class="btn btn-secondary btn-sm">Inapoi</a>`)}
+            <form class="card card-body" id="coachForm">
+                <div class="form-grid">
+                    <input class="input" name="nume" value="${escapeHtml(coach.nume)}" required>
+                    <input class="input" name="email" type="email" value="${escapeHtml(coach.email)}" required>
+                    <input class="input" name="telefon" value="${escapeHtml(coach.telefon)}">
+                    <input class="input" name="specializare" value="${escapeHtml(coach.specializare)}">
+                    <input class="input" name="disponibilitate" value="${escapeHtml(coach.disponibilitate)}">
+                    <select class="select" name="rol">
+                        <option value="antrenor" ${coach.rol==='antrenor'?'selected':''}>antrenor</option>
+                        <option value="colaborator" ${coach.rol==='colaborator'?'selected':''}>colaborator</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+            </form>`;
+        document.getElementById('coachForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            if (id) await api.put('/coaches/' + id, body);
+            else await api.post('/coaches', body);
+            showAlert('Salvat.', 'success');
+            location.hash = '#/coaches';
+        });
+    }
+};
+
+window.pages.competitions = {
+    async render(sub) {
+        if (sub[0] === 'form') return this.showForm(sub[1]);
+        return this.showList();
+    },
+
+    async showList() {
+        const res = await api.get('/competitions');
+        document.getElementById('page-content').innerHTML = `
+            ${pageHeader('Concursuri', 'Gestioneaza competitii', `<a href="#/competitions/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
+            ${renderTable(['Nume','Data','Locatie','Tip','Domeniu','Actiuni'], res.data, c => `
+                <tr>
+                    <td><strong>${escapeHtml(c.nume)}</strong></td>
+                    <td>${escapeHtml(c.data)}</td>
+                    <td>${escapeHtml(c.locatie)}</td>
+                    <td>${escapeHtml(c.tip)}</td>
+                    <td>${escapeHtml(c.domeniu)}</td>
+                    <td class="actions">
+                        <a href="#/competitions/form/${c.id}" class="btn btn-secondary btn-sm">Edit</a>
+                        <button class="btn btn-danger btn-sm" data-delete="${c.id}">Sterge</button>
+                    </td>
+                </tr>`)}
+        `;
+        document.querySelectorAll('[data-delete]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirmAction('Stergeti?')) return;
+                await api.delete('/competitions/' + btn.dataset.delete);
+                this.showList();
+            });
+        });
+    },
+
+    async showForm(id) {
+        let c = { nume:'', data:'', locatie:'', tip:'fizic', domeniu:'local' };
+        if (id) {
+            const all = await api.get('/competitions');
+            c = all.data.find(x => String(x.id) === String(id)) || c;
+        }
+        document.getElementById('page-content').innerHTML = `
+            ${pageHeader('Concurs', '', `<a href="#/competitions" class="btn btn-secondary btn-sm">Inapoi</a>`)}
+            <form class="card card-body" id="compForm">
+                <div class="form-grid">
+                    <input class="input" name="nume" value="${escapeHtml(c.nume)}" required>
+                    <input class="input" name="data" type="date" value="${escapeHtml(c.data)}" required>
+                    <input class="input" name="locatie" value="${escapeHtml(c.locatie)}" required>
+                    <select class="select" name="tip">
+                        <option value="fizic" ${c.tip==='fizic'?'selected':''}>fizic</option>
+                        <option value="online" ${c.tip==='online'?'selected':''}>online</option>
+                    </select>
+                    <select class="select" name="domeniu">
+                        <option value="local" ${c.domeniu==='local'?'selected':''}>local</option>
+                        <option value="international" ${c.domeniu==='international'?'selected':''}>international</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+            </form>`;
+        document.getElementById('compForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            if (id) await api.put('/competitions/' + id, body);
+            else await api.post('/competitions', body);
+            location.hash = '#/competitions';
+        });
+    }
+};

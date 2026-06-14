@@ -25,33 +25,34 @@ flowchart TB
 
 ---
 
-## 2. Containere — Browser si Server
+## 2. Containere — Browser, Backend API, Database
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','clusterBkg':'#ffffff','clusterBorder':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':70,'rankSpacing':80,'useMaxWidth':true,'padding':25}}}%%
 flowchart TB
-    subgraph CLIENT[" BROWSER "]
+    subgraph CLIENT[" BROWSER / FRONTEND "]
         direction TB
-        HTML["<b>HTML + CSS</b><br/>pagini Web"]
-        AJAX["<b>Ajax</b><br/>microservices.js"]
+        HTML["<b>HTML static</b><br/>frontend/"]
+        JS["<b>fetch API</b><br/>frontend/js/api.js"]
     end
 
-    subgraph SERVER[" SERVER PHP "]
+    subgraph BACKEND[" BACKEND API "]
         direction TB
-        ROUTER["<b>index.php</b>"]
+        SERVER["<b>server.php</b>"]
         CTRL["<b>Controllers</b>"]
-        API["<b>microservices.php</b>"]
         SVC["<b>Services</b>"]
-        MODEL["<b>Models PDO</b>"]
     end
 
-    DB[("<b>SQLite</b>")]
+    subgraph DATABASE[" DATABASE LAYER "]
+        MODEL["<b>Models PDO</b>"]
+        DB[("<b>SQLite</b>")]
+    end
 
-    HTML --> ROUTER --> CTRL --> MODEL --> DB
-    AJAX --> API --> SVC --> MODEL
+    HTML --> JS
+    JS --> SERVER --> CTRL --> SVC --> MODEL --> DB
 
     classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class HTML,AJAX,ROUTER,CTRL,API,SVC,MODEL,DB alb
+    class HTML,JS,SERVER,CTRL,SVC,MODEL,DB alb
 ```
 
 ---

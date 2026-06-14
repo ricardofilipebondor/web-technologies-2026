@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSC — Raport cerinte functionale</title>
+    <style>
+        body { font-family: Georgia, serif; max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6; color: #222; }
+        h1, h2, h3 { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+        th { background: #f5f5f5; }
+        .meta { color: #666; font-size: 0.95rem; }
+        section { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>eSC — Chess Club Manager</h1>
+        <p class="meta">Raport cerinte functionale · Tehnologii Web · UAIC</p>
+    </header>
+
+    <section>
+        <h2>1. Introducere</h2>
+        <p>Aplicația <strong>eSC</strong> gestionează activitățile unui club de șah: membri, antrenori, săli, competiții, premii și deplasări ale echipei reprezentative. Arhitectura este separată în trei straturi: <em>frontend</em> (HTML + fetch), <em>backend API</em> (PHP REST), <em>database</em> (SQLite + PDO).</p>
+    </section>
+
+    <section>
+        <h2>2. Cerințe funcționale</h2>
+
+        <h3>2.1 Antrenori și colaboratori</h3>
+        <ul>
+            <li>CRUD antrenori via API <code>/coaches</code></li>
+            <li>Înregistrare specializare, disponibilitate, rol (antrenor/colaborator)</li>
+            <li>Asociere la grupe (<code>groups.coach_id</code>) și activități (<code>activities.coach_id</code>)</li>
+        </ul>
+
+        <h3>2.2 Membri club</h3>
+        <ul>
+            <li>Înregistrare categorii: junior, senior, amator, profesionist</li>
+            <li>Date personale, rating, istoric participări și premii pe profil</li>
+            <li>Asociere antrenor și grupuri</li>
+            <li>Import/export CSV, JSON, XML (<code>/members/export</code>, <code>/members/import-file</code>)</li>
+        </ul>
+
+        <h3>2.3 Săli și activități</h3>
+        <ul>
+            <li>Săli: capacitate, dotări, intervale orare (<code>hall_slots</code>)</li>
+            <li>Programare antrenamente, cursuri, workshop-uri, simulane</li>
+            <li>Verificare conflicte sală și antrenor la programare</li>
+        </ul>
+
+        <h3>2.4 Competiții</h3>
+        <ul>
+            <li>Competiții locale/internaționale, online/fizic</li>
+            <li>Înregistrare participanți și rezultate</li>
+            <li>Clasamente și rapoarte cu export CSV/JSON/XML</li>
+        </ul>
+
+        <h3>2.5 Premii și performanțe</h3>
+        <ul>
+            <li>Premii asociate membrilor și competițiilor</li>
+            <li>Istoric individual (profil membru) și echipă (<code>team_results</code>)</li>
+        </ul>
+
+        <h3>2.6 Deplasări echipă reprezentativă</h3>
+        <ul>
+            <li>Înregistrare deplasări: destinație, date, scop</li>
+            <li>Cheltuieli: transport, cazare, masă</li>
+            <li>Raport decont per deplasare (CSV/PDF)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>3. Cerințe tehnice</h2>
+        <table>
+            <thead><tr><th>Cerință</th><th>Implementare</th></tr></thead>
+            <tbody>
+                <tr><td>Fără framework-uri</td><td>PHP vanilla, HTML/CSS/JS vanilla</td></tr>
+                <tr><td>API Web + Ajax</td><td>backend/server.php, frontend/js/api.js (fetch)</td></tr>
+                <tr><td>HTML/CSS responsive</td><td>frontend/, media queries 992px/768px</td></tr>
+                <tr><td>SQL Injection</td><td>PDO prepared statements</td></tr>
+                <tr><td>XSS</td><td>escapeHtml() la render</td></tr>
+                <tr><td>Import/export CSV/JSON/XML</td><td>backend/exports/</td></tr>
+                <tr><td>Modul administrare</td><td>/admin — gestionare utilizatori și roluri</td></tr>
+                <tr><td>SQLite</td><td>database/schema/database.sql</td></tr>
+                <tr><td>Plugins/servicii</td><td>backend/plugins/, backend/services/</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>4. Model date</h2>
+        <p>18 entități relaționale: users, roles, coaches, members, groups, halls, hall_slots, activities, competitions, participations, prizes, teams, team_results, trips, expenses și tabele de legătură M:N.</p>
+        <p>Proveniența datelor: introduse manual prin interfață, import fișiere, sau date demo din <code>install.php</code>.</p>
+    </section>
+
+    <section>
+        <h2>5. Interacțiune utilizator</h2>
+        <p>Autentificare → dashboard cu statistici → navigare modulară din sidebar. Fiecare modul oferă listare, filtrare, formulare CRUD și export unde este cazul. Rolurile (administrator, antrenor, responsabil financiar) controlează accesul la module.</p>
+    </section>
+
+    <footer class="meta">
+        <p>Documentație suplimentară: <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>, <a href="DESIGN.md">DESIGN.md</a>, <a href="CERINTE.md">CERINTE.md</a></p>
+    </footer>
+</body>
+</html>

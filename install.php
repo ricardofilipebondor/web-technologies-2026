@@ -1,11 +1,11 @@
 <?php
 
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/database/db.php';
 
-$sqlFile = __DIR__ . '/database.sql';
+$sqlFile = __DIR__ . '/database/schema/database.sql';
 
 if (!file_exists($sqlFile)) {
-    die('Fisierul database.sql nu a fost gasit.');
+    die('Fisierul database/schema/database.sql nu a fost gasit.');
 }
 
 $dbPath = __DIR__ . '/database/esc.sqlite';
@@ -46,9 +46,8 @@ try {
     echo '<ul>';
     echo '<li><strong>admin</strong> / <strong>admin pass</strong></li>';
     echo '</ul>';
-    echo '<p>Alte conturi se creeaza prin pagina de <a href="index.php?route=auth/register">Inregistrare</a>.</p>';
-    echo '<p>Baza de date contine date complete de exemplu pentru toate modulele.</p>';
-    echo '<p><a href="index.php">Mergi la aplicatie</a></p>';
+    echo '<p>Alte conturi se creeaza prin pagina de <a href="/frontend/index.html">Inregistrare</a>.</p>';
+    echo '<p><a href="/frontend/index.html">Mergi la aplicatie</a></p>';
 } catch (PDOException $e) {
     echo '<h2>Eroare la instalare</h2>';
     echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';

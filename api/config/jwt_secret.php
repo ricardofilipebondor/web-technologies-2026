@@ -1,3 +1,0 @@
-<?php
-
-define('JWT_SECRET', 'asdfj283ksdfh79a8sasdfj283ksdfh79a8sasdfj283ksdfh79a8sasdfj283ksdfh79a8sasdfj283ksdfh79a8sasdfj283ksdfh79a8s');

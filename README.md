@@ -6,15 +6,29 @@ Proiect la **Tehnologii Web** (UAIC).
 
 ---
 
+## Arhitectura (3 straturi)
+
+```
+/frontend          Pagini HTML + CSS + JS (fetch API)
+/backend           API REST (server.php, routes, controllers, services)
+/database          Acces date (db.php, models, schema SQLite)
+```
+
+**Flux:** Browser → `frontend/*.html` → `fetch('/backend/server.php/...')` → controllers → models → SQLite
+
+Nu mai exista SSR — datele sunt incarcate exclusiv prin API.
+
+---
+
 ## Instalare
 
 ```cmd
 cd web-technologies-2026
 C:\xampp\php\php.exe install.php
-C:\xampp\php\php.exe -S localhost:8000
+C:\xampp\php\php.exe -S localhost:8000 router.php
 ```
 
-http://localhost:8000/index.php
+http://localhost:8000/frontend/index.html
 
 | User  | Parola     | Rol           |
 |-------|------------|---------------|
@@ -22,95 +36,61 @@ http://localhost:8000/index.php
 
 ---
 
-## Cerinte TW
-
-| Cerinta | Loc in proiect |
-|---------|----------------|
-| PHP fara framework | controllers, models, services |
-| API Web + Ajax | api/microservices.php, assets/js/microservices.js |
-| HTML, CSS, responsiv | views/, assets/css/style.css |
-| SQLite | database.sql |
-| CSV, JSON export/import | exports/ |
-| Admin | rol administrator |
-| XSS, SQL injection | e(), PDO prepare |
-
-Mai multe: [docs/CERINTE.md](docs/CERINTE.md)
-
----
-
-## Diagrame
-
-### Context
-
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'24px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':80,'rankSpacing':90,'useMaxWidth':true,'padding':30}}}%%
-flowchart TB
-    A["<b>Administrator</b>"]
-    B["<b>Antrenor</b>"]
-    C["<b>Responsabil financiar</b>"]
-    APP["<b>eSC Web App</b><br/>PHP + SQLite"]
-
-    A --> APP
-    B --> APP
-    C --> APP
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class A,B,C,APP alb
-```
-
-### Server
-
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','clusterBkg':'#ffffff','clusterBorder':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':70,'rankSpacing':80,'useMaxWidth':true,'padding':25}}}%%
-flowchart TB
-    subgraph CLIENT[" BROWSER "]
-        HTML["<b>HTML + CSS</b>"]
-        AJAX["<b>Ajax</b>"]
-    end
-
-    subgraph SERVER[" SERVER PHP "]
-        ROUTER["<b>index.php</b>"]
-        API["<b>microservices.php</b>"]
-        MODEL["<b>Models</b>"]
-    end
-
-    DB[("<b>SQLite</b>")]
-
-    HTML --> ROUTER --> MODEL --> DB
-    AJAX --> API --> MODEL
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class HTML,AJAX,ROUTER,API,MODEL,DB alb
-```
-
-Restul diagramelor: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-
----
-
 ## API
 
-`api/microservices.php`
+Entry point: `backend/server.php`
 
 ```
-?service=members&action=list
-?service=members&action=profile&id=1
-?service=competitions&action=participations&competition_id=1
+POST /backend/server.php/auth/login
+GET  /backend/server.php/auth/me
+GET  /backend/server.php/dashboard
+GET  /backend/server.php/members
+GET  /backend/server.php/members/{id}
+POST /backend/server.php/members
+...
 ```
+
+Autentificare: sesiune PHP (cookie), `credentials: 'include'` in fetch.
 
 ---
 
 ## Structura
 
 ```
-index.php           router
-config/             setari
-controllers/        pagini
-models/             baza de date
-views/              HTML
-services/           logica API
-plugins/modules/    meniu modular
-api/                JSON
-exports/            CSV, JSON
-assets/             css, js
-docs/               diagrame
+frontend/
+  index.html          login / inregistrare
+  app.html            aplicatie principala (hash router)
+  css/style.css
+  js/api.js           client fetch
+  js/pages/*.js       pagini dinamice
+
+backend/
+  server.php          entry point API
+  routes/             definitii rute
+  controllers/        handlers JSON
+  services/           logica business
+  exports/            CSV, JSON, XML, PDF
+  plugins/            meniu modular
+
+database/
+  db.php              conexiune PDO SQLite
+  schema/database.sql schema + date demo
+  models/             acces la date (PDO)
 ```
+
+---
+
+## Cerinte TW
+
+| Cerinta | Loc in proiect |
+|---------|----------------|
+| PHP fara framework | backend/controllers, database/models |
+| API Web + Ajax | backend/server.php, frontend/js/api.js |
+| HTML, CSS, responsiv | frontend/ |
+| SQLite | database/schema/database.sql |
+| CSV, JSON, XML export/import | backend/exports/, frontend import/export UI |
+| Admin | backend/controllers/AdminApiController.php, frontend/js/pages/admin.js |
+| XSS, SQL injection | escapeHtml(), PDO prepare |
+| Plugins/servicii Web | backend/plugins/, backend/services/ |
+
+Documentatie: [docs/RAPORT.html](docs/RAPORT.html) · [docs/DESIGN.md](docs/DESIGN.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/CERINTE.md](docs/CERINTE.md)

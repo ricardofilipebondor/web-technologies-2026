@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "validate:css": "stylelint \"frontend/css/style.css\"",
+    "validate:html": "node scripts/validate-html.js"
+  },
+  "devDependencies": {
+    "stylelint": "^17.13.0",
+    "stylelint-config-standard": "^40.0.0"
+  }
+}

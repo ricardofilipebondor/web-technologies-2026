@@ -35,10 +35,10 @@ window.pages.halls = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Sala', '', `<a href="#/halls" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="hallForm">
-                <input class="input" name="denumire" value="${escapeHtml(h.denumire)}" required>
-                <input class="input" name="capacitate" type="number" value="${h.capacitate}" style="margin-top:0.5rem">
-                <input class="input" name="dotari" value="${escapeHtml(h.dotari)}" style="margin-top:0.5rem">
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Denumire', `<input class="input" name="denumire" value="${escapeHtml(h.denumire)}" required>`)}
+                ${labeledField('Capacitate', `<input class="input" name="capacitate" type="number" value="${h.capacitate}">`)}
+                ${labeledField('Dotari', `<input class="input" name="dotari" value="${escapeHtml(h.dotari)}">`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('hallForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -56,11 +56,11 @@ window.pages.halls = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Intervale: ' + hall.denumire, '', `<a href="#/halls" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="slotForm">
-                <select class="select" name="zi_saptamana" style="flex:1">
+                ${filterField('Zi', `<select class="select" name="zi_saptamana">
                     ${['Luni','Marti','Miercuri','Joi','Vineri','Sambata','Duminica'].map(z => `<option value="${z}">${z}</option>`).join('')}
-                </select>
-                <input class="input" name="ora_start" placeholder="Ora start (ex: 10:00)">
-                <input class="input" name="ora_end" placeholder="Ora end (ex: 12:00)">
+                </select>`)}
+                ${filterField('Ora start', `<input class="input" name="ora_start" placeholder="ex: 10:00">`)}
+                ${filterField('Ora end', `<input class="input" name="ora_end" placeholder="ex: 12:00">`)}
                 <button class="btn btn-primary btn-sm">Adauga</button>
             </form>
             ${renderTable(['Zi','Start','End','Actiuni'], slots, s => `
@@ -122,15 +122,15 @@ window.pages.activities = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Activitate', '', `<a href="#/activities" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="actForm">
-                <input class="input" name="titlu" value="${escapeHtml(a.titlu)}" required>
-                <select class="select" name="tip" style="margin-top:0.5rem">
-                    ${['antrenament','curs','workshop','simultan'].map(t => `<option value="${t}">${t}</option>`).join('')}
-                </select>
-                <input class="input" name="data_start" type="datetime-local" value="${escapeHtml((a.data_start||'').replace(' ','T').slice(0,16))}" style="margin-top:0.5rem">
-                <input class="input" name="data_end" type="datetime-local" value="${escapeHtml((a.data_end||'').replace(' ','T').slice(0,16))}" style="margin-top:0.5rem">
-                <select class="select" name="hall_id" style="margin-top:0.5rem">${meta.halls.map(h => `<option value="${h.id}">${escapeHtml(h.denumire)}</option>`).join('')}</select>
-                <select class="select" name="coach_id" style="margin-top:0.5rem">${meta.coaches.map(c => `<option value="${c.id}">${escapeHtml(c.nume)}</option>`).join('')}</select>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Titlu', `<input class="input" name="titlu" value="${escapeHtml(a.titlu)}" required>`)}
+                ${labeledField('Tip', `<select class="select" name="tip">
+                    ${['antrenament','curs','workshop','simultan'].map(t => `<option value="${t}" ${a.tip===t?'selected':''}>${t}</option>`).join('')}
+                </select>`)}
+                ${labeledField('Data start', `<input class="input" name="data_start" type="datetime-local" value="${escapeHtml((a.data_start||'').replace(' ','T').slice(0,16))}">`)}
+                ${labeledField('Data end', `<input class="input" name="data_end" type="datetime-local" value="${escapeHtml((a.data_end||'').replace(' ','T').slice(0,16))}">`)}
+                ${labeledField('Sala', `<select class="select" name="hall_id">${meta.halls.map(h => `<option value="${h.id}" ${String(a.hall_id)===String(h.id)?'selected':''}>${escapeHtml(h.denumire)}</option>`).join('')}</select>`)}
+                ${labeledField('Antrenor', `<select class="select" name="coach_id">${meta.coaches.map(c => `<option value="${c.id}" ${String(a.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('actForm').addEventListener('submit', async e => {
             e.preventDefault();

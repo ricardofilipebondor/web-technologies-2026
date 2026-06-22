@@ -1,283 +1,246 @@
-# Arhitectura eSC
+# Arhitectură eSC — Model C4
 
-Diagrame proiect Tehnologii Web.
+SPA + API REST PHP, fără SSR. Cerințe: [web-projects.html](https://edu.info.uaic.ro/web-technologies/web-projects.html)
 
 ---
 
-## 1. Context — cine foloseste aplicatia
+## 1. Context (C4 — nivel 1)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','clusterBkg':'#ffffff','clusterBorder':'#000000','titleColor':'#000000','fontSize':'24px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':80,'rankSpacing':90,'useMaxWidth':true,'padding':30}}}%%
 flowchart TB
-    A["<b>Administrator</b>"]
-    B["<b>Antrenor</b>"]
-    C["<b>Responsabil financiar</b>"]
-
-    APP["<b>eSC Web App</b><br/>PHP + SQLite"]
-
+    A[Administrator]
+    B[Antrenor]
+    C[Responsabil financiar]
+    APP[eSC Web App<br/>PHP + SQLite + HTML/CSS/JS]
     A --> APP
     B --> APP
     C --> APP
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class A,B,C,APP alb
 ```
 
 ---
 
-## 2. Containere — Browser, Backend API, Database
+## 2. Containere (C4 — nivel 2)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','clusterBkg':'#ffffff','clusterBorder':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':70,'rankSpacing':80,'useMaxWidth':true,'padding':25}}}%%
 flowchart TB
-    subgraph CLIENT[" BROWSER / FRONTEND "]
-        direction TB
-        HTML["<b>HTML static</b><br/>frontend/"]
-        JS["<b>fetch API</b><br/>frontend/js/api.js"]
+    subgraph CLIENT[Browser]
+        HTML[HTML static<br/>index.html, app.html]
+        JS[JavaScript<br/>api.js, router.js, pages]
+        CSS[CSS responsive<br/>style.css]
     end
 
-    subgraph BACKEND[" BACKEND API "]
-        direction TB
-        SERVER["<b>server.php</b>"]
-        CTRL["<b>Controllers</b>"]
-        SVC["<b>Services</b>"]
+    subgraph SERVER[PHP built-in server]
+        ROUTER[router.php]
+        API[backend/server.php]
+        CTRL[Controllers]
+        MW[AuthMiddleware]
+        PLG[PluginManager]
+        SVC[Services]
+        EXP[Exports CSV/JSON/XML/PDF]
     end
 
-    subgraph DATABASE[" DATABASE LAYER "]
-        MODEL["<b>Models PDO</b>"]
-        DB[("<b>SQLite</b>")]
+    subgraph DATA[Persistență]
+        MODEL[Models PDO]
+        DB[(SQLite)]
     end
 
     HTML --> JS
-    JS --> SERVER --> CTRL --> SVC --> MODEL --> DB
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class HTML,JS,SERVER,CTRL,SVC,MODEL,DB alb
+    JS -->|fetch| ROUTER --> API --> MW --> CTRL
+    CTRL --> SVC --> MODEL --> DB
+    CTRL --> MODEL
+    CTRL --> EXP
+    PLG -.->|meniu pe rol| JS
 ```
 
 ---
 
-## 3. Flux pagina Web — request clasic
+## 3. Componente backend (C4 — nivel 3)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':60,'rankSpacing':70,'useMaxWidth':true,'padding':20}}}%%
+flowchart LR
+    R[Routes api.php] --> A1[AuthApiController]
+    R --> A2[MembersApiController]
+    R --> A3[DashboardApiController]
+    R --> A4[ModuleApiControllers]
+    R --> A5[AdminApiController]
+    A2 --> S1[MembersService] --> M[Models]
+    A4 --> S2[CompetitionsService]
+    A4 --> S3[TeamsService]
+    A4 --> S4[TripsService]
+    S2 & S3 & S4 --> M
+    A4 --> M
+    A3 --> M
+    A5 --> M
+```
+
+---
+
+## 4. Flux încărcare aplicație
+
+```mermaid
 flowchart TB
-    U["<b>Utilizator</b>"]
-    I["<b>index.php</b>"]
-    C["<b>Controller</b>"]
-    M["<b>Model</b>"]
-    D[("<b>SQLite</b>")]
-    V["<b>View HTML</b>"]
-
-    U --> I --> C --> M --> D
-    C --> V --> U
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class U,I,C,M,D,V alb
+    U[Utilizator] --> LOGIN[index.html]
+    LOGIN -->|autentificat| APP[app.html]
+    APP --> AUTH[POST /auth/login]
+    APP --> MENU[GET /auth/menu]
+    MENU --> PAGE[pages/*.js]
+    PAGE --> API[backend/server.php]
 ```
 
 ---
 
-## 4. Flux Ajax
+## 5. Flux Ajax (exemplu: membri)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','actorBkg':'#ffffff','actorBorder':'#000000','actorTextColor':'#000000','signalColor':'#000000','labelBoxBkgColor':'#ffffff','labelTextColor':'#000000','noteBkgColor':'#ffffff','noteTextColor':'#000000','fontSize':'20px','fontFamily':'Arial'},'sequence':{'actorMargin':100,'messageMargin':50,'mirrorActors':false,'wrap':true}}}%%
 sequenceDiagram
-    autonumber
     participant U as Utilizator
-    participant JS as microservices.js
-    participant API as microservices.php
-    participant S as MembersService
+    participant P as members.js
+    participant A as api.js
+    participant S as server.php
+    participant C as MembersApiController
+    participant M as Member
     participant DB as SQLite
 
-    U->>JS: Deschide Dashboard
-    JS->>API: fetch members list
-    API->>S: list()
-    S->>DB: SELECT
-    DB-->>S: date
-    S-->>API: JSON
-    API-->>JS: raspuns
-    JS-->>U: Afiseaza numar membri
+    U->>P: #/members
+    P->>A: GET /members
+    A->>S: fetch + cookie sesiune
+    S->>C: index()
+    C->>C: requireModule members
+    C->>M: all()
+    M->>DB: SELECT
+    DB-->>P: JSON
+    P-->>U: tabel HTML
 ```
 
 ---
 
-## 5. Plugin-uri si micro-servicii
+## 6. Module (15 plugin-uri)
+
+Fiecare modul are un plugin în `backend/plugins/modules/`. Accesul pe rol: `backend/config/app.php`.
+
+Dashboard, Members, Coaches, Teams, Groups, Halls, Activities, Competitions, Participations, Rankings, Prizes, Trips, Expenses, Reimbursements, Admin.
+
+Modulul *reimbursements* agregă date din `trips`, `expenses`, `trip_members` (fără tabel propriu).
+
+---
+
+## 7. Autentificare și roluri
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':70,'rankSpacing':80,'useMaxWidth':true,'padding':25}}}%%
 flowchart TB
-    PM["<b>PluginManager</b>"]
-
-    PM --> P1["<b>MembersPlugin</b>"]
-    PM --> P2["<b>CompetitionsPlugin</b>"]
-    PM --> P3["<b>TripsPlugin</b>"]
-
-    P1 --> API["<b>microservices.php</b>"]
-    P2 --> API
-    P3 --> API
-
-    API --> S1["<b>MembersService</b>"]
-    API --> S2["<b>CompetitionsService</b>"]
-    API --> S3["<b>TripsService</b>"]
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class PM,P1,P2,P3,API,S1,S2,S3 alb
+    REQ[Request API] --> SESS{Sesiune validă?}
+    SESS -->|Nu| E401[401]
+    SESS -->|Da| MOD{userCanAccess modul?}
+    MOD -->|Nu| E403[403]
+    MOD -->|Da| OK[Controller]
 ```
 
 ---
 
-## 6. Baza de date — utilizatori si roluri
+## 8. ER — utilizatori
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'20px','fontFamily':'Arial'}}}%%
 erDiagram
     roles ||--o{ users : are
-
     roles {
         int id PK
-        text role_name
+        text role_name UK
     }
     users {
         int id PK
-        text username
-        text password_hash
         int role_id FK
+        text username UK
+        text email UK
+        text password_hash
     }
 ```
 
 ---
 
-## 7. Baza de date — membri si antrenori
+## 9. ER — antrenori, membri, grupe
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'20px','fontFamily':'Arial'}}}%%
 erDiagram
     coaches ||--o{ members : antreneaza
     coaches ||--o{ groups : coordoneaza
-    groups }o--o{ members : contine
-
-    coaches {
-        int id PK
-        text nume
-        text specializare
-    }
-    members {
-        int id PK
-        text nume
-        text categorie
-        int coach_id FK
-    }
-    groups {
-        int id PK
-        text denumire
-        int coach_id FK
-    }
+    groups ||--o{ group_members : contine
+    members ||--o{ group_members : apartine
 ```
 
 ---
 
-## 8. Baza de date — competitii si premii
+## 10. ER — săli și activități
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'20px','fontFamily':'Arial'}}}%%
 erDiagram
+    halls ||--o{ hall_slots : are
+    halls ||--o{ activities : gazduieste
+    coaches ||--o{ activities : conduce
+```
+
+Conflicte la programare: `Activity::hasHallConflict()`, `Activity::hasCoachConflict()`.
+
+---
+
+## 11. ER — echipe și competiții
+
+```mermaid
+erDiagram
+    teams ||--o{ team_members : include
+    members ||--o{ team_members : face_parte
+    teams ||--o{ team_results : obtine
+    competitions ||--o{ team_results : evalueaza
     competitions ||--o{ participations : are
     members ||--o{ participations : participa
     members ||--o{ prizes : castiga
-    competitions ||--o{ prizes : ofera
-
-    competitions {
-        int id PK
-        text nume
-        text tip
-    }
-    participations {
-        int id PK
-        int member_id FK
-        int competition_id FK
-    }
-    prizes {
-        int id PK
-        text titlu
-        int member_id FK
-    }
+    competitions ||--o{ prizes : acorda
 ```
 
 ---
 
-## 9. Baza de date — deplasari si cheltuieli
+## 12. ER — deplasări
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'20px','fontFamily':'Arial'}}}%%
 erDiagram
     teams ||--o{ trips : organizeaza
-    trips ||--o{ expenses : are
-    trips ||--o{ reimbursements : decont
-
-    teams {
-        int id PK
-        text denumire
-    }
-    trips {
-        int id PK
-        text destinatie
-        int team_id FK
-    }
-    expenses {
-        int id PK
-        text tip
-        real suma
-    }
+    trips ||--o{ trip_members : include
+    members ||--o{ trip_members : participa
+    trips ||--o{ expenses : genereaza
 ```
 
 ---
 
-## 10. Autentificare si acces pe roluri
+## 13. Etape dezvoltare
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':60,'rankSpacing':70,'useMaxWidth':true,'padding':20}}}%%
-flowchart TB
-    START(["<b>Request</b>"])
-    LOGIN{"<b>Logat?</b>"}
-    AUTH["<b>Pagina Login</b>"]
-    ROLE{"<b>Rol OK?</b>"}
-    DENY["<b>Mesaj eroare</b>"]
-    PAGE["<b>Controller + View</b>"]
-    CHECK{"<b>Parola corecta?</b>"}
-    SESSION["<b>Sesiune PHP</b>"]
-    DASH["<b>Dashboard</b>"]
-
-    START --> LOGIN
-    LOGIN -->|Nu| AUTH
-    LOGIN -->|Da| ROLE
-    ROLE -->|Nu| DENY
-    ROLE -->|Da| PAGE
-    AUTH --> CHECK
-    CHECK -->|Da| SESSION
-    CHECK -->|Nu| AUTH
-    SESSION --> DASH
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class START,LOGIN,AUTH,ROLE,DENY,PAGE,CHECK,SESSION,DASH alb
+flowchart LR
+    E1[Bază date] --> E2[API REST]
+    E2 --> E3[Frontend SPA]
+    E3 --> E4[Module CRUD]
+    E4 --> E5[Import/Export]
+    E5 --> E6[Admin + roluri]
+    E6 --> E7[Documentație]
 ```
+
+| Etapă | Conținut |
+|-------|----------|
+| 1 | `database.sql`, `install.php` |
+| 2 | `server.php`, Router, Auth |
+| 3 | `app.html`, hash router |
+| 4 | 15 plugin-uri |
+| 5 | CSV, JSON, XML, PDF |
+| 6 | `AdminApiController`, permisiuni |
+| 7 | RAPORT, diagrame, film |
 
 ---
 
-## 11. Etape proiect (timeline)
+## Fișiere cheie
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'darkMode':false,'background':'#ffffff','mainBkg':'#ffffff','primaryColor':'#ffffff','primaryTextColor':'#000000','primaryBorderColor':'#000000','lineColor':'#000000','fontSize':'22px','fontFamily':'Arial'},'flowchart':{'nodeSpacing':50,'rankSpacing':60,'useMaxWidth':true,'padding':20}}}%%
-flowchart TB
-    E1["<b>1. SQLite</b><br/>install.php"]
-    E2["<b>2. Auth</b><br/>Router"]
-    E3["<b>3. Module</b><br/>CRUD"]
-    E4["<b>4. Micro-servicii</b><br/>Ajax"]
-    E5["<b>5. Import</b><br/>Export"]
-    E6["<b>6. Film demo</b>"]
-
-    E1 --> E2 --> E3 --> E4 --> E5 --> E6
-
-    classDef alb fill:#ffffff,stroke:#000000,color:#000000,stroke-width:3px
-    class E1,E2,E3,E4,E5,E6 alb
-```
+| Strat | Cale |
+|-------|------|
+| Entry | `router.php`, `backend/server.php` |
+| Rute | `backend/routes/api.php` |
+| Securitate | `backend/middleware/AuthMiddleware.php` |
+| Roluri | `backend/config/app.php` |
+| Client | `frontend/js/api.js`, `frontend/js/router.js` |
+| Schema | `database/schema/database.sql` |

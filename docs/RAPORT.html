@@ -1,107 +1,451 @@
 <!DOCTYPE html>
+
 <html lang="ro">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eSC — Raport cerinte functionale</title>
+
+    <title>eSC — Raport cerințe funcționale</title>
+
+    <meta name="author" content="Ricardo Bondor, Eduard Ozarchevici">
+
     <style>
-        body { font-family: Georgia, serif; max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6; color: #222; }
-        h1, h2, h3 { font-family: Arial, sans-serif; }
-        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-        th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-        th { background: #f5f5f5; }
-        .meta { color: #666; font-size: 0.95rem; }
-        section { margin-bottom: 2rem; }
+
+        :root { --text: #222; --muted: #666; --border: #ccc; --bg-th: #f5f5f5; }
+
+        body { font-family: Georgia, 'Times New Roman', serif; max-width: 920px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.65; color: var(--text); }
+
+        h1, h2, h3 { font-family: Arial, Helvetica, sans-serif; margin-top: 1.5em; }
+
+        h1 { font-size: 1.75rem; border-bottom: 2px solid #333; padding-bottom: 0.3em; }
+
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+
+        th, td { border: 1px solid var(--border); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+
+        th { background: var(--bg-th); font-family: Arial, sans-serif; }
+
+        .meta { color: var(--muted); font-size: 0.92rem; }
+
+        section { margin-bottom: 2.2rem; }
+
+        code { font-family: Consolas, monospace; font-size: 0.9em; background: #f4f4f4; padding: 0.1em 0.35em; }
+
+        nav.toc { background: #fafafa; border: 1px solid var(--border); padding: 1rem 1.25rem; margin: 1.5rem 0; }
+
+        nav.toc ol { margin: 0.5rem 0 0 1.2rem; }
+
+        nav.toc a { color: #0366d6; }
+
     </style>
+
 </head>
+
 <body>
+
     <header>
+
         <h1>eSC — Chess Club Manager</h1>
-        <p class="meta">Raport cerinte functionale · Tehnologii Web · UAIC</p>
+
+        <p class="meta">Raport cerințe · Tehnologii Web · UAIC · 2026</p>
+
+        <p class="meta">Autori: Ricardo Bondor, Eduard Ozarchevici · Licență: <a href="../LICENSE">MIT</a></p>
+
     </header>
 
-    <section>
+
+
+    <nav class="toc" aria-label="Cuprins">
+
+        <strong>Cuprins</strong>
+
+        <ol>
+
+            <li><a href="#intro">Introducere</a></li>
+
+            <li><a href="#scop">Scop și domeniu</a></li>
+
+            <li><a href="#utilizatori">Roluri și permisiuni</a></li>
+
+            <li><a href="#functional">Cerințe funcționale</a></li>
+
+            <li><a href="#netehnice">Cerințe netehnice</a></li>
+
+            <li><a href="#tehnice">Cerințe tehnice TW</a></li>
+
+            <li><a href="#model">Model de date</a></li>
+
+            <li><a href="#interactiune">Interacțiune utilizator</a></li>
+
+            <li><a href="#arhitectura">Arhitectură</a></li>
+
+            <li><a href="#livrabile">Livrabile</a></li>
+
+        </ol>
+
+    </nav>
+
+
+
+    <section id="intro">
+
         <h2>1. Introducere</h2>
-        <p>Aplicația <strong>eSC</strong> gestionează activitățile unui club de șah: membri, antrenori, săli, competiții, premii și deplasări ale echipei reprezentative. Arhitectura este separată în trei straturi: <em>frontend</em> (HTML + fetch), <em>backend API</em> (PHP REST), <em>database</em> (SQLite + PDO).</p>
+
+        <p><strong>eSC</strong> gestionează operațiunile unui club de șah: membri, antrenori, săli, activități, competiții, premii, deplasări.</p>
+
+        <ul>
+
+            <li><strong>Frontend</strong> — HTML, CSS responsive, JavaScript vanilla, <code>fetch</code> asincron;</li>
+
+            <li><strong>Backend</strong> — PHP REST fără framework, <code>backend/server.php</code>;</li>
+
+            <li><strong>Bază de date</strong> — SQLite via PDO, modele în <code>database/models/</code>.</li>
+
+        </ul>
+
+        <p>Datele se încarcă exclusiv prin API JSON; nu există server-side rendering.</p>
+
     </section>
 
-    <section>
-        <h2>2. Cerințe funcționale</h2>
 
-        <h3>2.1 Antrenori și colaboratori</h3>
-        <ul>
-            <li>CRUD antrenori via API <code>/coaches</code></li>
-            <li>Înregistrare specializare, disponibilitate, rol (antrenor/colaborator)</li>
-            <li>Asociere la grupe (<code>groups.coach_id</code>) și activități (<code>activities.coach_id</code>)</li>
-        </ul>
 
-        <h3>2.2 Membri club</h3>
-        <ul>
-            <li>Înregistrare categorii: junior, senior, amator, profesionist</li>
-            <li>Date personale, rating, istoric participări și premii pe profil</li>
-            <li>Asociere antrenor și grupuri</li>
-            <li>Import/export CSV, JSON, XML (<code>/members/export</code>, <code>/members/import-file</code>)</li>
-        </ul>
+    <section id="scop">
 
-        <h3>2.3 Săli și activități</h3>
-        <ul>
-            <li>Săli: capacitate, dotări, intervale orare (<code>hall_slots</code>)</li>
-            <li>Programare antrenamente, cursuri, workshop-uri, simulane</li>
-            <li>Verificare conflicte sală și antrenor la programare</li>
-        </ul>
+        <h2>2. Scop și domeniu</h2>
 
-        <h3>2.4 Competiții</h3>
-        <ul>
-            <li>Competiții locale/internaționale, online/fizic</li>
-            <li>Înregistrare participanți și rezultate</li>
-            <li>Clasamente și rapoarte cu export CSV/JSON/XML</li>
-        </ul>
+        <p>Digitalizarea proceselor administrative și sportive ale clubului, cu acces pe roluri și import/export în formate deschise (CSV, JSON, XML).</p>
 
-        <h3>2.5 Premii și performanțe</h3>
-        <ul>
-            <li>Premii asociate membrilor și competițiilor</li>
-            <li>Istoric individual (profil membru) și echipă (<code>team_results</code>)</li>
-        </ul>
+        <p><strong>Constrângeri:</strong> fără framework-uri Web; HTML și CSS valide; comunicare Ajax; cod sub licență MIT.</p>
 
-        <h3>2.6 Deplasări echipă reprezentativă</h3>
-        <ul>
-            <li>Înregistrare deplasări: destinație, date, scop</li>
-            <li>Cheltuieli: transport, cazare, masă</li>
-            <li>Raport decont per deplasare (CSV/PDF)</li>
-        </ul>
     </section>
 
-    <section>
-        <h2>3. Cerințe tehnice</h2>
+
+
+    <section id="utilizatori">
+
+        <h2>3. Roluri și permisiuni</h2>
+
+        <p>Definite în <code>backend/config/app.php</code>. Verificare API: <code>AuthMiddleware::requireModule()</code>. Meniu UI: <code>GET /auth/menu</code> (filtrat pe rol).</p>
+
         <table>
-            <thead><tr><th>Cerință</th><th>Implementare</th></tr></thead>
+
+            <thead><tr><th>Rol</th><th>Module accesibile</th></tr></thead>
+
             <tbody>
-                <tr><td>Fără framework-uri</td><td>PHP vanilla, HTML/CSS/JS vanilla</td></tr>
-                <tr><td>API Web + Ajax</td><td>backend/server.php, frontend/js/api.js (fetch)</td></tr>
-                <tr><td>HTML/CSS responsive</td><td>frontend/, media queries 992px/768px</td></tr>
-                <tr><td>SQL Injection</td><td>PDO prepared statements</td></tr>
-                <tr><td>XSS</td><td>escapeHtml() la render</td></tr>
-                <tr><td>Import/export CSV/JSON/XML</td><td>backend/exports/</td></tr>
-                <tr><td>Modul administrare</td><td>/admin — gestionare utilizatori și roluri</td></tr>
-                <tr><td>SQLite</td><td>database/schema/database.sql</td></tr>
-                <tr><td>Plugins/servicii</td><td>backend/plugins/, backend/services/</td></tr>
+
+                <tr>
+
+                    <td><code>administrator</code></td>
+
+                    <td>dashboard, members, coaches, teams, groups, halls, activities, competitions, participations, rankings, prizes, trips, expenses, reimbursements, admin</td>
+
+                </tr>
+
+                <tr>
+
+                    <td><code>antrenor</code></td>
+
+                    <td>dashboard, members, coaches, teams, groups, halls, activities, competitions, participations, rankings, prizes</td>
+
+                </tr>
+
+                <tr>
+
+                    <td><code>responsabil_financiar</code></td>
+
+                    <td>dashboard, trips, expenses, reimbursements</td>
+
+                </tr>
+
             </tbody>
+
         </table>
+
+        <p>La înregistrare (<code>/auth/register</code>) se pot alege doar rolurile <code>antrenor</code> și <code>responsabil_financiar</code>. Rolul <code>administrator</code> se atribuie din modulul admin.</p>
+
     </section>
 
-    <section>
-        <h2>4. Model date</h2>
-        <p>18 entități relaționale: users, roles, coaches, members, groups, halls, hall_slots, activities, competitions, participations, prizes, teams, team_results, trips, expenses și tabele de legătură M:N.</p>
-        <p>Proveniența datelor: introduse manual prin interfață, import fișiere, sau date demo din <code>install.php</code>.</p>
+
+
+    <section id="functional">
+
+        <h2>4. Cerințe funcționale</h2>
+
+
+
+        <h3>4.1 Antrenori</h3>
+
+        <ul>
+
+            <li>CRUD — <code>/coaches</code></li>
+
+            <li>Câmpuri: nume, email, telefon, specializare, disponibilitate, rol</li>
+
+            <li>Legătură cu grupe și activități</li>
+
+        </ul>
+
+
+
+        <h3>4.2 Membri</h3>
+
+        <ul>
+
+            <li>CRUD — <code>/members</code>; categorii: junior, senior, amator, profesionist</li>
+
+            <li>Profil cu participări și premii — <code>MembersService::profile()</code></li>
+
+            <li>Import/export CSV, JSON, XML</li>
+
+        </ul>
+
+
+
+        <h3>4.3 Săli și activități</h3>
+
+        <ul>
+
+            <li>Săli cu capacitate, dotări, intervale orare — <code>/halls</code></li>
+
+            <li>Activități: antrenament, curs, workshop, simultan — <code>/activities</code></li>
+
+            <li>Verificare conflicte sală/antrenor — <code>Activity::hasHallConflict()</code>, <code>hasCoachConflict()</code></li>
+
+        </ul>
+
+
+
+        <h3>4.4 Competiții</h3>
+
+        <ul>
+
+            <li>CRUD competiții — <code>/competitions</code></li>
+
+            <li>Participări, punctaj, loc — <code>/participations</code></li>
+
+            <li>Clasamente — <code>/rankings</code>; export CSV/JSON/XML</li>
+
+        </ul>
+
+
+
+        <h3>4.5 Echipe și premii</h3>
+
+        <ul>
+
+            <li>Echipe, componență, rezultate — <code>/teams</code></li>
+
+            <li>Grupe — <code>/groups</code></li>
+
+            <li>Premii — <code>/prizes</code></li>
+
+        </ul>
+
+
+
+        <h3>4.6 Deplasări și finanțe</h3>
+
+        <ul>
+
+            <li>Deplasări, membri participanți — <code>/trips</code></li>
+
+            <li>Cheltuieli — <code>/expenses</code></li>
+
+            <li>Deconturi (agregare trips + expenses) — <code>/reimbursements</code>; export CSV/PDF</li>
+
+        </ul>
+
+
+
+        <h3>4.7 Administrare</h3>
+
+        <ul>
+
+            <li>Gestionare utilizatori și roluri — <code>/admin</code></li>
+
+        </ul>
+
     </section>
 
-    <section>
-        <h2>5. Interacțiune utilizator</h2>
-        <p>Autentificare → dashboard cu statistici → navigare modulară din sidebar. Fiecare modul oferă listare, filtrare, formulare CRUD și export unde este cazul. Rolurile (administrator, antrenor, responsabil financiar) controlează accesul la module.</p>
+
+
+    <section id="netehnice">
+
+        <h2>5. Cerințe netehnice</h2>
+
+        <table>
+
+            <thead><tr><th>Cerință</th><th>Implementare</th></tr></thead>
+
+            <tbody>
+
+                <tr><td>SQL injection</td><td>PDO prepared statements</td></tr>
+
+                <tr><td>XSS</td><td><code>escapeHtml()</code> la render dinamic</td></tr>
+
+                <tr><td>Autentificare</td><td>Sesiune PHP, cookie HttpOnly</td></tr>
+
+                <tr><td>Responsive</td><td>Breakpoints 992px, 768px în <code>style.css</code></td></tr>
+
+                <tr><td>Modularizare</td><td>15 plugin-uri, 4 servicii, 13 modele</td></tr>
+
+            </tbody>
+
+        </table>
+
     </section>
+
+
+
+    <section id="tehnice">
+
+        <h2>6. Cerințe tehnice Tehnologii Web</h2>
+
+        <table>
+
+            <thead><tr><th>Cerință</th><th>Loc în proiect</th></tr></thead>
+
+            <tbody>
+
+                <tr><td>PHP fără framework</td><td><code>backend/</code>, <code>database/models/</code></td></tr>
+
+                <tr><td>API Web + Ajax</td><td><code>backend/server.php</code>, <code>frontend/js/api.js</code></td></tr>
+
+                <tr><td>HTML, CSS, responsive</td><td><code>frontend/</code></td></tr>
+
+                <tr><td>SQLite</td><td><code>database/schema/database.sql</code></td></tr>
+
+                <tr><td>Import/export CSV, JSON</td><td><code>backend/exports/</code></td></tr>
+
+                <tr><td>Modul administrare</td><td><code>/admin</code></td></tr>
+
+                <tr><td>Template-uri UI</td><td><code>app.html</code>, <code>pages/*.js</code></td></tr>
+
+                <tr><td>Repository Git</td><td>GitHub</td></tr>
+
+                <tr><td>Licență liberă</td><td><a href="../LICENSE">LICENSE</a> (MIT)</td></tr>
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+
+
+    <section id="model">
+
+        <h2>7. Model de date</h2>
+
+        <p>18 tabele SQLite: <code>roles</code>, <code>users</code>, <code>coaches</code>, <code>members</code>, <code>groups</code>, <code>group_members</code>, <code>halls</code>, <code>hall_slots</code>, <code>activities</code>, <code>teams</code>, <code>team_members</code>, <code>team_results</code>, <code>competitions</code>, <code>participations</code>, <code>prizes</code>, <code>trips</code>, <code>trip_members</code>, <code>expenses</code>.</p>
+
+        <p><strong>Proveniența datelor:</strong></p>
+
+        <ul>
+
+            <li>Date demo în <code>database/schema/database.sql</code> (via <code>install.php</code>);</li>
+
+            <li>Introducere manuală prin formulare CRUD;</li>
+
+            <li>Import CSV/JSON/XML (membri);</li>
+
+            <li>Fără API extern — date locale în SQLite.</li>
+
+        </ul>
+
+        <p>Diagrame ER: <a href="ARCHITECTURE.md">ARCHITECTURE.md</a> (secțiunile 8–12).</p>
+
+    </section>
+
+
+
+    <section id="interactiune">
+
+        <h2>8. Interacțiune utilizator</h2>
+
+        <ol>
+
+            <li>Autentificare pe <code>frontend/index.html</code>;</li>
+
+            <li>După login → <code>app.html</code>;</li>
+
+            <li>Meniu lateral din <code>GET /auth/menu</code>;</li>
+
+            <li>Navigare hash (<code>#/members</code> etc.) fără reîncărcare;</li>
+
+            <li>Modulele încarcă date via API și afișează tabele/formulare;</li>
+
+            <li>CRUD prin POST/PUT/DELETE cu mesaje de confirmare.</li>
+
+        </ol>
+
+        <p>Design UI: <a href="DESIGN.md">DESIGN.md</a>.</p>
+
+    </section>
+
+
+
+    <section id="arhitectura">
+
+        <h2>9. Arhitectură</h2>
+
+        <p>Model C4, flux Ajax, etape dezvoltare: <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>.</p>
+
+        <ul>
+
+            <li><code>frontend/</code> — HTML, CSS, JS</li>
+
+            <li><code>backend/</code> — server.php, routes, controllers, services, plugins, middleware</li>
+
+            <li><code>database/</code> — db.php, models/, schema/</li>
+
+        </ul>
+
+    </section>
+
+
+
+    <section id="livrabile">
+
+        <h2>10. Livrabile</h2>
+
+        <table>
+
+            <thead><tr><th>Livrabil</th><th>Locație</th></tr></thead>
+
+            <tbody>
+
+                <tr><td>Raport cerințe</td><td><code>docs/RAPORT.html</code></td></tr>
+
+                <tr><td>Design UI</td><td><code>docs/DESIGN.md</code></td></tr>
+
+                <tr><td>Arhitectură C4</td><td><code>docs/ARCHITECTURE.md</code></td></tr>
+
+                <tr><td>Soluție funcțională</td><td>Repository + <code>README.md</code></td></tr>
+
+                <tr><td>Film demonstrativ 3–5 min</td><td>Realizat de echipă la susținere</td></tr>
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+
 
     <footer class="meta">
-        <p>Documentație suplimentară: <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>, <a href="DESIGN.md">DESIGN.md</a>, <a href="CERINTE.md">CERINTE.md</a></p>
+
+        <p><a href="ARCHITECTURE.md">ARCHITECTURE.md</a> · <a href="DESIGN.md">DESIGN.md</a> · <a href="../README.md">README.md</a> · <a href="../LICENSE">LICENSE</a></p>
+
+        <p><a href="https://edu.info.uaic.ro/web-technologies/web-projects.html">Cerințe oficiale TW</a></p>
+
     </footer>
+
 </body>
+
 </html>
+
+

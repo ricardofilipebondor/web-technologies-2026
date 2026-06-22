@@ -27,6 +27,15 @@ function renderTable(headers, rows, rowHtml) {
         </div>`;
 }
 
+function labeledField(label, controlHtml, full = false) {
+    const cls = full ? 'form-field full' : 'form-field';
+    return `<label class="${cls}"><span class="form-label">${escapeHtml(label)}</span>${controlHtml}</label>`;
+}
+
+function filterField(label, controlHtml) {
+    return `<div class="form-field filter-field"><span class="form-label">${escapeHtml(label)}</span>${controlHtml}</div>`;
+}
+
 function pageHeader(title, subtitle, toolbarHtml = '') {
     return `
         <div class="page-header">
@@ -38,4 +47,4 @@ function pageHeader(title, subtitle, toolbarHtml = '') {
         </div>`;
 }
 
-window.utils = { escapeHtml, showAlert, confirmAction, renderTable, pageHeader };
+window.utils = { escapeHtml, showAlert, confirmAction, renderTable, pageHeader, labeledField, filterField };

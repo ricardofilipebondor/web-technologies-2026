@@ -24,11 +24,11 @@ window.pages.members = {
                 <a href="#/members/form" class="btn btn-primary btn-sm">+ Adauga</a>
             `)}
             <form class="filter-bar" id="memberFilter">
-                <input type="text" id="memberSearch" class="input" placeholder="Cauta..." value="${escapeHtml(search)}" style="flex:1">
-                <select id="memberCat" class="select" style="width:auto">
+                ${filterField('Cautare', `<input type="text" id="memberSearch" class="input" placeholder="Nume, email..." value="${escapeHtml(search)}">`)}
+                ${filterField('Categorie', `<select id="memberCat" class="select">
                     <option value="">Toate</option>
                     ${['junior','senior','amator','profesionist'].map(c => `<option value="${c}" ${categorie===c?'selected':''}>${c}</option>`).join('')}
-                </select>
+                </select>`)}
                 <button class="btn btn-secondary btn-sm">Filtreaza</button>
             </form>
             ${renderTable(['Nume','Email','Categorie','Rating','Antrenor','Actiuni'], members, m => `
@@ -98,17 +98,17 @@ window.pages.members = {
             ${pageHeader(id ? 'Editare membru' : 'Membru nou', '', `<a href="#/members" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="memberForm">
                 <div class="form-grid">
-                    <input class="input" name="nume" placeholder="Nume" value="${escapeHtml(member.nume)}" required>
-                    <input class="input" name="prenume" placeholder="Prenume" value="${escapeHtml(member.prenume)}" required>
-                    <input class="input" name="data_nasterii" type="date" value="${escapeHtml(member.data_nasterii)}" required>
-                    <input class="input" name="email" type="email" value="${escapeHtml(member.email)}" required>
-                    <input class="input" name="telefon" value="${escapeHtml(member.telefon)}">
-                    <select class="select" name="categorie">${['junior','senior','amator','profesionist'].map(c => `<option value="${c}" ${member.categorie===c?'selected':''}>${c}</option>`).join('')}</select>
-                    <input class="input" name="rating" type="number" value="${member.rating}">
-                    <select class="select" name="coach_id"><option value="">— Antrenor —</option>${coaches.map(c => `<option value="${c.id}" ${String(member.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>
-                    <input class="input" name="adresa" value="${escapeHtml(member.adresa)}" style="grid-column:1/-1">
+                    ${labeledField('Nume', `<input class="input" name="nume" value="${escapeHtml(member.nume)}" required>`)}
+                    ${labeledField('Prenume', `<input class="input" name="prenume" value="${escapeHtml(member.prenume)}" required>`)}
+                    ${labeledField('Data nasterii', `<input class="input" name="data_nasterii" type="date" value="${escapeHtml(member.data_nasterii)}" required>`)}
+                    ${labeledField('Email', `<input class="input" name="email" type="email" value="${escapeHtml(member.email)}" required>`)}
+                    ${labeledField('Telefon', `<input class="input" name="telefon" value="${escapeHtml(member.telefon)}">`)}
+                    ${labeledField('Categorie', `<select class="select" name="categorie">${['junior','senior','amator','profesionist'].map(c => `<option value="${c}" ${member.categorie===c?'selected':''}>${c}</option>`).join('')}</select>`)}
+                    ${labeledField('Rating', `<input class="input" name="rating" type="number" value="${member.rating}">`)}
+                    ${labeledField('Antrenor', `<select class="select" name="coach_id"><option value="">— Fara antrenor —</option>${coaches.map(c => `<option value="${c.id}" ${String(member.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                    ${labeledField('Adresa', `<input class="input" name="adresa" value="${escapeHtml(member.adresa)}">`, true)}
                 </div>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
 
         document.getElementById('memberForm').addEventListener('submit', async e => {
@@ -127,14 +127,14 @@ window.pages.members = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Import membri', 'Incarca date din CSV, JSON sau XML', `<a href="#/members" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="importForm" enctype="multipart/form-data">
-                <select class="select" name="type" id="importType">
+                ${labeledField('Format fisier', `<select class="select" name="type" id="importType">
                     <option value="csv">CSV</option>
                     <option value="json">JSON</option>
                     <option value="xml">XML</option>
-                </select>
-                <input type="file" name="file" class="input" accept=".csv,.json,.xml" required style="margin-top:0.75rem">
-                <p class="auth-msg" style="margin-top:0.5rem">CSV: header cu nume, prenume, email, etc. JSON/XML: array de obiecte member.</p>
-                <button class="btn btn-primary" style="margin-top:1rem">Importa</button>
+                </select>`)}
+                ${labeledField('Fisier', `<input type="file" name="file" class="input" accept=".csv,.json,.xml" required>`)}
+                <p class="auth-msg">CSV: header cu nume, prenume, email, etc. JSON/XML: array de obiecte member.</p>
+                <button class="btn btn-primary form-actions">Importa</button>
             </form>
             <div id="importResult" class="auth-msg"></div>`;
 

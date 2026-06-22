@@ -1,5 +1,3 @@
-const { escapeHtml, showAlert } = window.utils;
-
 async function handleLogin(e) {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value;

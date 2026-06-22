@@ -40,11 +40,11 @@ window.pages.participations = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Participare', '', `<a href="#/participations" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="partForm">
-                <select class="select" name="member_id">${meta.members.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>
-                <select class="select" name="competition_id" style="margin-top:0.5rem">${meta.competitions.map(c => `<option value="${c.id}">${escapeHtml(c.nume)}</option>`).join('')}</select>
-                <input class="input" name="punctaj" type="number" step="0.01" value="${p.punctaj}" style="margin-top:0.5rem">
-                <input class="input" name="loc_obtinut" type="number" value="${p.loc_obtinut || ''}" style="margin-top:0.5rem">
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Membru', `<select class="select" name="member_id">${meta.members.map(m => `<option value="${m.id}" ${String(p.member_id)===String(m.id)?'selected':''}>${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>`)}
+                ${labeledField('Concurs', `<select class="select" name="competition_id">${meta.competitions.map(c => `<option value="${c.id}" ${String(p.competition_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                ${labeledField('Punctaj', `<input class="input" name="punctaj" type="number" step="0.01" value="${p.punctaj}">`)}
+                ${labeledField('Loc obtinut', `<input class="input" name="loc_obtinut" type="number" value="${p.loc_obtinut || ''}">`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('partForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -65,10 +65,10 @@ window.pages.participations = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Raport participari', '', `<a href="#/participations" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="reportFilter">
-                <select class="select" name="competition_id" style="flex:1">
+                ${filterField('Concurs', `<select class="select" name="competition_id">
                     <option value="">Selecteaza concurs</option>
                     ${d.competitions.map(c => `<option value="${c.id}" ${String(d.competitionId)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}
-                </select>
+                </select>`)}
                 <button class="btn btn-secondary btn-sm">Afiseaza</button>
                 ${d.competitionId ? `
                     <a href="${api.exportUrl('/participations/export?competition_id=' + d.competitionId + '&format=csv')}" class="btn btn-secondary btn-sm">CSV</a>
@@ -99,10 +99,10 @@ window.pages.rankings = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Clasamente', 'Clasament per concurs')}
             <form class="filter-bar" id="rankFilter">
-                <select class="select" name="competition_id" style="flex:1">
+                ${filterField('Concurs', `<select class="select" name="competition_id">
                     <option value="">Selecteaza concurs</option>
                     ${d.competitions.map(c => `<option value="${c.id}" ${String(d.competitionId)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}
-                </select>
+                </select>`)}
                 <button class="btn btn-secondary btn-sm">Afiseaza</button>
                 ${d.competitionId ? `
                     <a href="${api.exportUrl('/rankings/export?competition_id=' + d.competitionId + '&format=csv')}" class="btn btn-secondary btn-sm">CSV</a>
@@ -160,12 +160,12 @@ window.pages.prizes = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Premiu', '', `<a href="#/prizes" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="prizeForm">
-                <input class="input" name="titlu" value="${escapeHtml(p.titlu)}" required>
-                <textarea class="input" name="descriere" style="margin-top:0.5rem">${escapeHtml(p.descriere)}</textarea>
-                <select class="select" name="member_id" style="margin-top:0.5rem">${meta.members.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>
-                <select class="select" name="competition_id" style="margin-top:0.5rem"><option value="">—</option>${meta.competitions.map(c => `<option value="${c.id}">${escapeHtml(c.nume)}</option>`).join('')}</select>
-                <input class="input" name="data_acordare" type="date" value="${escapeHtml(p.data_acordare)}" style="margin-top:0.5rem">
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Titlu', `<input class="input" name="titlu" value="${escapeHtml(p.titlu)}" required>`)}
+                ${labeledField('Descriere', `<textarea class="textarea" name="descriere">${escapeHtml(p.descriere)}</textarea>`)}
+                ${labeledField('Membru', `<select class="select" name="member_id">${meta.members.map(m => `<option value="${m.id}" ${String(p.member_id)===String(m.id)?'selected':''}>${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>`)}
+                ${labeledField('Concurs', `<select class="select" name="competition_id"><option value="">— Fara concurs —</option>${meta.competitions.map(c => `<option value="${c.id}" ${String(p.competition_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                ${labeledField('Data acordare', `<input class="input" name="data_acordare" type="date" value="${escapeHtml(p.data_acordare)}">`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('prizeForm').addEventListener('submit', async e => {
             e.preventDefault();

@@ -40,9 +40,9 @@ window.pages.teams = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Echipa', '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="teamForm">
-                <input class="input" name="denumire" value="${escapeHtml(t.denumire)}" required>
-                <input class="input" name="descriere" value="${escapeHtml(t.descriere)}" style="margin-top:0.5rem">
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Denumire', `<input class="input" name="denumire" value="${escapeHtml(t.denumire)}" required>`)}
+                ${labeledField('Descriere', `<input class="input" name="descriere" value="${escapeHtml(t.descriere)}">`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('teamForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -59,7 +59,7 @@ window.pages.teams = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri echipa: ' + team.denumire, '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addMemberForm">
-                <select class="select" name="member_id" style="flex:1">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>
+                ${filterField('Membru', `<select class="select" name="member_id">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>`)}
                 <button class="btn btn-primary btn-sm">Adauga</button>
             </form>
             ${renderTable(['Membru','Actiuni'], members, m => `
@@ -86,10 +86,10 @@ window.pages.teams = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Rezultate: ' + team.denumire, '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="resultForm">
-                <select class="select" name="competition_id">${competitions.map(c => `<option value="${c.id}">${escapeHtml(c.nume)}</option>`).join('')}</select>
-                <input class="input" name="punctaj_total" type="number" step="0.01" placeholder="Punctaj" style="margin-top:0.5rem">
-                <input class="input" name="loc_obtinut" type="number" placeholder="Loc" style="margin-top:0.5rem">
-                <button class="btn btn-primary btn-sm" style="margin-top:0.5rem">Adauga rezultat</button>
+                ${labeledField('Concurs', `<select class="select" name="competition_id">${competitions.map(c => `<option value="${c.id}">${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                ${labeledField('Punctaj total', `<input class="input" name="punctaj_total" type="number" step="0.01">`)}
+                ${labeledField('Loc obtinut', `<input class="input" name="loc_obtinut" type="number">`)}
+                <button class="btn btn-primary btn-sm form-actions">Adauga rezultat</button>
             </form>
             ${renderTable(['Concurs','Punctaj','Loc','Actiuni'], results, r => `
                 <tr><td>${escapeHtml(r.competition_nume)}</td><td>${r.punctaj_total}</td><td>${r.loc_obtinut || '—'}</td>
@@ -153,12 +153,12 @@ window.pages.groups = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Grup', '', `<a href="#/groups" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="groupForm">
-                <input class="input" name="denumire" value="${escapeHtml(g.denumire)}" required>
-                <select class="select" name="nivel" style="margin-top:0.5rem">
+                ${labeledField('Denumire', `<input class="input" name="denumire" value="${escapeHtml(g.denumire)}" required>`)}
+                ${labeledField('Nivel', `<select class="select" name="nivel">
                     ${['incepatori','intermediar','avansat','competitie'].map(n => `<option value="${n}" ${g.nivel===n?'selected':''}>${n}</option>`).join('')}
-                </select>
-                <select class="select" name="coach_id" style="margin-top:0.5rem"><option value="">— Antrenor —</option>${coaches.map(c => `<option value="${c.id}" ${String(g.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select></select>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                </select>`)}
+                ${labeledField('Antrenor', `<select class="select" name="coach_id"><option value="">— Fara antrenor —</option>${coaches.map(c => `<option value="${c.id}" ${String(g.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('groupForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -175,7 +175,7 @@ window.pages.groups = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri grup: ' + group.denumire, '', `<a href="#/groups" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addForm">
-                <select class="select" name="member_id" style="flex:1">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>
+                ${filterField('Membru', `<select class="select" name="member_id">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>`)}
                 <button class="btn btn-primary btn-sm">Adauga</button>
             </form>
             ${renderTable(['Membru','Actiuni'], members, m => `

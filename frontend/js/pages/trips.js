@@ -38,12 +38,12 @@ window.pages.trips = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Deplasare', '', `<a href="#/trips" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="tripForm">
-                <input class="input" name="destinatie" value="${escapeHtml(t.destinatie)}" required>
-                <input class="input" name="data_plecare" type="date" value="${escapeHtml(t.data_plecare)}" style="margin-top:0.5rem">
-                <input class="input" name="data_intoarcere" type="date" value="${escapeHtml(t.data_intoarcere)}" style="margin-top:0.5rem">
-                <input class="input" name="scop" value="${escapeHtml(t.scop)}" style="margin-top:0.5rem">
-                <select class="select" name="team_id" style="margin-top:0.5rem"><option value="">—</option>${meta.teams.map(tm => `<option value="${tm.id}">${escapeHtml(tm.denumire)}</option>`).join('')}</select>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Destinatie', `<input class="input" name="destinatie" value="${escapeHtml(t.destinatie)}" required>`)}
+                ${labeledField('Data plecare', `<input class="input" name="data_plecare" type="date" value="${escapeHtml(t.data_plecare)}">`)}
+                ${labeledField('Data intoarcere', `<input class="input" name="data_intoarcere" type="date" value="${escapeHtml(t.data_intoarcere)}">`)}
+                ${labeledField('Scop', `<input class="input" name="scop" value="${escapeHtml(t.scop)}">`)}
+                ${labeledField('Echipa', `<select class="select" name="team_id"><option value="">— Fara echipa —</option>${meta.teams.map(tm => `<option value="${tm.id}" ${String(t.team_id)===String(tm.id)?'selected':''}>${escapeHtml(tm.denumire)}</option>`).join('')}</select>`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('tripForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -60,7 +60,7 @@ window.pages.trips = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri deplasare: ' + trip.destinatie, '', `<a href="#/trips" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addForm">
-                <select class="select" name="member_id" style="flex:1">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>
+                ${filterField('Membru', `<select class="select" name="member_id">${available.map(m => `<option value="${m.id}">${escapeHtml(m.nume + ' ' + m.prenume)}</option>`).join('')}</select>`)}
                 <button class="btn btn-primary btn-sm">Adauga</button>
             </form>
             ${renderTable(['Membru','Actiuni'], members, m => `
@@ -119,11 +119,11 @@ window.pages.expenses = {
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Cheltuiala', '', `<a href="#/expenses" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="expForm">
-                <select class="select" name="trip_id">${meta.trips.map(t => `<option value="${t.id}">${escapeHtml(t.destinatie)}</option>`).join('')}</select>
-                <select class="select" name="tip" style="margin-top:0.5rem">${['transport','cazare','masa'].map(t => `<option value="${t}">${t}</option>`).join('')}</select>
-                <input class="input" name="suma" type="number" step="0.01" value="${e.suma}" style="margin-top:0.5rem">
-                <input class="input" name="observatii" value="${escapeHtml(e.observatii)}" style="margin-top:0.5rem">
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                ${labeledField('Deplasare', `<select class="select" name="trip_id">${meta.trips.map(t => `<option value="${t.id}" ${String(e.trip_id)===String(t.id)?'selected':''}>${escapeHtml(t.destinatie)}</option>`).join('')}</select>`)}
+                ${labeledField('Tip cheltuiala', `<select class="select" name="tip">${['transport','cazare','masa'].map(t => `<option value="${t}" ${e.tip===t?'selected':''}>${t}</option>`).join('')}</select>`)}
+                ${labeledField('Suma (RON)', `<input class="input" name="suma" type="number" step="0.01" value="${e.suma}">`)}
+                ${labeledField('Observatii', `<input class="input" name="observatii" value="${escapeHtml(e.observatii)}">`)}
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('expForm').addEventListener('submit', async ev => {
             ev.preventDefault();

@@ -5,39 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eSC - Autentificare</title>
     <link href="css/style.css" rel="stylesheet">
-    <style>
-        .auth-page { max-width: 420px; margin: 4rem auto; padding: 2rem; }
-        .auth-page h2 { margin-top: 0; }
-        .auth-page input, .auth-page select { width: 100%; margin-bottom: 0.75rem; }
-        .auth-page button { width: 100%; }
-        .auth-msg { color: var(--text-muted); font-size: 13px; margin-top: 0.5rem; }
-    </style>
 </head>
 <body>
     <div class="auth-page card">
+        <h1 class="auth-brand">eSC — Chess Club Manager</h1>
         <h2>Autentificare</h2>
-        <form id="loginForm">
-            <input type="text" id="loginUsername" class="input" placeholder="Username" required>
-            <input type="password" id="loginPassword" class="input" placeholder="Parola" required>
+        <form id="loginForm" class="auth-form">
+            <label class="form-field">
+                <span class="form-label">Username</span>
+                <input type="text" id="loginUsername" class="input" name="username" required autocomplete="username">
+            </label>
+            <label class="form-field">
+                <span class="form-label">Parola</span>
+                <input type="password" id="loginPassword" class="input" name="password" required autocomplete="current-password">
+            </label>
             <button type="submit" class="btn btn-primary">Login</button>
         </form>
-        <div id="loginMessage" class="auth-msg"></div>
+        <div id="loginMessage" class="auth-msg" role="status" aria-live="polite"></div>
 
-        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+        <hr class="auth-divider">
 
         <h2>Inregistrare</h2>
-        <form id="registerForm">
-            <input type="text" id="regUsername" class="input" placeholder="Username" required>
-            <input type="email" id="regEmail" class="input" placeholder="Email" required>
-            <input type="password" id="regPassword" class="input" placeholder="Parola" required>
-            <input type="password" id="regPasswordConfirm" class="input" placeholder="Confirma parola" required>
-            <select id="regRole" class="select">
-                <option value="antrenor">Antrenor</option>
-                <option value="responsabil_financiar">Responsabil financiar</option>
-            </select>
+        <form id="registerForm" class="auth-form">
+            <label class="form-field">
+                <span class="form-label">Username</span>
+                <input type="text" id="regUsername" class="input" name="username" required autocomplete="username">
+            </label>
+            <label class="form-field">
+                <span class="form-label">Email</span>
+                <input type="email" id="regEmail" class="input" name="email" required autocomplete="email">
+            </label>
+            <label class="form-field">
+                <span class="form-label">Parola</span>
+                <input type="password" id="regPassword" class="input" name="password" required autocomplete="new-password">
+            </label>
+            <label class="form-field">
+                <span class="form-label">Confirma parola</span>
+                <input type="password" id="regPasswordConfirm" class="input" name="password_confirm" required autocomplete="new-password">
+            </label>
+            <label class="form-field">
+                <span class="form-label">Rol</span>
+                <select id="regRole" class="select" name="role">
+                    <option value="antrenor">Antrenor</option>
+                    <option value="responsabil_financiar">Responsabil financiar</option>
+                </select>
+            </label>
             <button type="submit" class="btn btn-secondary">Inregistrare</button>
         </form>
-        <div id="registerMessage" class="auth-msg"></div>
+        <div id="registerMessage" class="auth-msg" role="status" aria-live="polite"></div>
     </div>
 
     <script src="js/api.js"></script>

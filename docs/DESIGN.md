@@ -1,54 +1,52 @@
 # Design interfață — eSC Chess Club Manager
 
-## Principii de design
+Fișiere: `frontend/app.html`, `frontend/index.html`, `frontend/css/style.css`, `frontend/js/pages/*.js`, `frontend/js/router.js`.
 
-### 1. Layout tip dashboard
-Aplicația folosește un **app shell** cu sidebar fix și conținut principal, pattern familiar din aplicațiile administrative. Motivație: utilizatorii (antrenori, administratori) navighează frecvent între module — sidebar-ul oferă acces persistent la toate secțiunile.
+## Layout
 
-### 2. Paletă neutră (alb/gri)
-Culorile din `frontend/css/style.css` folosesc tonuri de gri (`#09090b`, `#71717a`, `#f4f4f5`) fără culori stridente. Motivație: interfața este un instrument de lucru profesional, nu un site promoțional — contrastul ridicat asigură lizibilitatea datelor tabulare.
+App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /auth/menu` și afișează doar modulele permise rolului curent (`backend/config/app.php`).
 
-### 3. Tipografie Inter
-Fontul Inter este folosit pentru claritate pe ecrane mici și mari. Motivație: font sans-serif modern, optimizat pentru UI, cu suport bun pentru diacritice românești.
+## Stil
 
-### 4. Componente reutilizabile
-- **Stat cards** pe dashboard pentru metrici rapide
-- **Data tables** pentru liste de entități
-- **Filter bar** pentru căutare/filtrare
-- **Toolbar** cu acțiuni contextuale (export, adăugare)
+- Paletă gri (`#09090b`, `#71717a`, `#f4f4f5`) pentru lizibilitatea datelor tabulare.
+- Font Inter pentru claritate și suport diacritice românești.
+- Componente reutilizabile: stat cards (dashboard), tabele, filter bar, toolbar cu acțiuni (export, adăugare).
 
-Motivație: consistență vizuală — utilizatorul învață un singur pattern și îl aplică în toate modulele.
+## Responsive
 
-## Responsive design
-
-### Breakpoint 992px
-Sidebar-ul devine off-canvas cu overlay. Motivație: pe tablete, spațiul lateral este redus — meniul hamburger eliberează spațiu pentru tabele.
-
-### Breakpoint 768px
-- Grid-urile (`stats-grid`, `grid-2`, `grid-3`) trec la o coloană
-- Tabelele devin scroll orizontal (`table-wrap`)
-- Formularele ocupă lățimea completă
-
-Motivație: pe telefon, tabelele cu multe coloane nu pot fi comprimate — scroll-ul orizontal păstrează datele intacte.
+| Breakpoint | Comportament |
+|------------|--------------|
+| 992px | Sidebar off-canvas cu overlay |
+| 768px | Grid-uri pe o coloană; tabele cu scroll orizontal (`table-wrap`); formulare pe lățime completă |
 
 ## Interacțiune
 
-- **Hash router** (`#/members`, `#/dashboard`) — navigare fără reîncărcare pagină
-- **Fetch API asincron** — datele se încarcă după render, cu indicator „Se încarcă..."
-- **Flash alerts** — feedback vizual pentru acțiuni (salvare, ștergere, import)
+- Navigare hash (`#/members`, `#/dashboard`) fără reîncărcare pagină.
+- Date încărcate asincron cu `fetch`; indicator „Se încarcă..." la așteptare.
+- Mesaje flash la salvare, ștergere, import.
 
 ## Accesibilitate
 
-- `lang="ro"` pe documente HTML
-- `aria-label` pe butonul meniu mobil
-- Contrast text/fond conform paletei neutre
-- Butoane cu dimensiuni tactile adecvate (`btn-sm` minimum 32px înălțime)
+- `lang="ro"` pe paginile HTML.
+- `aria-label` pe butonul meniului mobil.
+- Contrast text/fond ridicat; butoane min. 32px înălțime.
 
-## Alegeri tehnice frontend
+## Mapare module UI
 
-| Alegere | Motivație |
-|---------|-----------|
-| HTML static + JS (fără framework) | Cerință TW; reduce complexitatea |
-| SPA cu hash routing | O singură pagină `app.html`, tranziții rapide între module |
-| Sesiune PHP + cookie | Autentificare simplă, fără JWT pe client |
-| Escape HTML la render | Prevenire XSS la afișarea datelor din API |
+| Rută hash | Fișier JS | Conținut |
+|-----------|-----------|----------|
+| `#/dashboard` | `pages/dashboard.js` | Statistici, activitate recentă |
+| `#/members` | `pages/members.js` | Membri, import/export |
+| `#/coaches` | `pages/coaches.js` | Antrenori |
+| `#/competitions` | `pages/coaches.js` | Competiții |
+| `#/teams` | `pages/teams.js` | Echipe, rezultate |
+| `#/groups` | `pages/teams.js` | Grupe |
+| `#/halls` | `pages/halls.js` | Săli, intervale orare |
+| `#/activities` | `pages/halls.js` | Activități |
+| `#/participations` | `pages/participations.js` | Participări |
+| `#/rankings` | `pages/participations.js` | Clasamente |
+| `#/prizes` | `pages/participations.js` | Premii |
+| `#/trips` | `pages/trips.js` | Deplasări |
+| `#/expenses` | `pages/trips.js` | Cheltuieli |
+| `#/reimbursements` | `pages/trips.js` | Deconturi |
+| `#/admin` | `pages/admin.js` | Utilizatori, roluri |

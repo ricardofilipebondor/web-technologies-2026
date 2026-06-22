@@ -40,17 +40,17 @@ window.pages.coaches = {
             ${pageHeader(id ? 'Editare' : 'Antrenor nou', '', `<a href="#/coaches" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="coachForm">
                 <div class="form-grid">
-                    <input class="input" name="nume" value="${escapeHtml(coach.nume)}" required>
-                    <input class="input" name="email" type="email" value="${escapeHtml(coach.email)}" required>
-                    <input class="input" name="telefon" value="${escapeHtml(coach.telefon)}">
-                    <input class="input" name="specializare" value="${escapeHtml(coach.specializare)}">
-                    <input class="input" name="disponibilitate" value="${escapeHtml(coach.disponibilitate)}">
-                    <select class="select" name="rol">
-                        <option value="antrenor" ${coach.rol==='antrenor'?'selected':''}>antrenor</option>
-                        <option value="colaborator" ${coach.rol==='colaborator'?'selected':''}>colaborator</option>
-                    </select>
+                    ${labeledField('Nume', `<input class="input" name="nume" value="${escapeHtml(coach.nume)}" required>`)}
+                    ${labeledField('Email', `<input class="input" name="email" type="email" value="${escapeHtml(coach.email)}" required>`)}
+                    ${labeledField('Telefon', `<input class="input" name="telefon" value="${escapeHtml(coach.telefon)}">`)}
+                    ${labeledField('Specializare', `<input class="input" name="specializare" value="${escapeHtml(coach.specializare)}">`)}
+                    ${labeledField('Disponibilitate', `<input class="input" name="disponibilitate" value="${escapeHtml(coach.disponibilitate)}">`)}
+                    ${labeledField('Rol', `<select class="select" name="rol">
+                        <option value="antrenor" ${coach.rol==='antrenor'?'selected':''}>Antrenor</option>
+                        <option value="colaborator" ${coach.rol==='colaborator'?'selected':''}>Colaborator</option>
+                    </select>`)}
                 </div>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('coachForm').addEventListener('submit', async e => {
             e.preventDefault();
@@ -105,19 +105,19 @@ window.pages.competitions = {
             ${pageHeader('Concurs', '', `<a href="#/competitions" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="compForm">
                 <div class="form-grid">
-                    <input class="input" name="nume" value="${escapeHtml(c.nume)}" required>
-                    <input class="input" name="data" type="date" value="${escapeHtml(c.data)}" required>
-                    <input class="input" name="locatie" value="${escapeHtml(c.locatie)}" required>
-                    <select class="select" name="tip">
-                        <option value="fizic" ${c.tip==='fizic'?'selected':''}>fizic</option>
-                        <option value="online" ${c.tip==='online'?'selected':''}>online</option>
-                    </select>
-                    <select class="select" name="domeniu">
-                        <option value="local" ${c.domeniu==='local'?'selected':''}>local</option>
-                        <option value="international" ${c.domeniu==='international'?'selected':''}>international</option>
-                    </select>
+                    ${labeledField('Nume concurs', `<input class="input" name="nume" value="${escapeHtml(c.nume)}" required>`)}
+                    ${labeledField('Data', `<input class="input" name="data" type="date" value="${escapeHtml(c.data)}" required>`)}
+                    ${labeledField('Locatie', `<input class="input" name="locatie" value="${escapeHtml(c.locatie)}" required>`)}
+                    ${labeledField('Tip', `<select class="select" name="tip">
+                        <option value="fizic" ${c.tip==='fizic'?'selected':''}>Fizic</option>
+                        <option value="online" ${c.tip==='online'?'selected':''}>Online</option>
+                    </select>`)}
+                    ${labeledField('Domeniu', `<select class="select" name="domeniu">
+                        <option value="local" ${c.domeniu==='local'?'selected':''}>Local</option>
+                        <option value="international" ${c.domeniu==='international'?'selected':''}>International</option>
+                    </select>`)}
                 </div>
-                <button class="btn btn-primary" style="margin-top:1rem">Salveaza</button>
+                <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('compForm').addEventListener('submit', async e => {
             e.preventDefault();

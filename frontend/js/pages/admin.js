@@ -8,11 +8,11 @@ window.pages.admin = {
             <div class="card card-body" style="margin-bottom:1.5rem">
                 <h3 style="margin-top:0">Adauga utilizator</h3>
                 <form id="adminUserForm" class="form-grid">
-                    <input class="input" name="username" placeholder="Username" required>
-                    <input class="input" name="email" type="email" placeholder="Email" required>
-                    <input class="input" name="password" type="password" placeholder="Parola" required>
-                    <select class="select" name="role">${roles.map(r => `<option value="${r.role_name}">${escapeHtml(r.role_name)}</option>`).join('')}</select>
-                    <button class="btn btn-primary" style="grid-column:1/-1">Creeaza</button>
+                    ${labeledField('Username', `<input class="input" name="username" required>`)}
+                    ${labeledField('Email', `<input class="input" name="email" type="email" required>`)}
+                    ${labeledField('Parola', `<input class="input" name="password" type="password" required>`)}
+                    ${labeledField('Rol', `<select class="select" name="role">${roles.map(r => `<option value="${r.role_name}">${escapeHtml(r.role_name)}</option>`).join('')}</select>`)}
+                    <button class="btn btn-primary" style="grid-column:1/-1;margin-top:0.5rem">Creeaza</button>
                 </form>
             </div>
             ${renderTable(['Username','Email','Rol','Actiuni'], users, u => `

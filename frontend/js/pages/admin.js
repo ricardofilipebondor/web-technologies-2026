@@ -1,7 +1,9 @@
 window.pages.admin = {
     async render() {
-        const res = await api.get('/admin');
-        const { users, roles } = res.data;
+        const usersRes = await api.get('/users');
+        const rolesRes = await api.get('/roles');
+        const users = api.items(usersRes);
+        const roles = api.items(rolesRes);
 
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Administrare', 'Gestionare utilizatori si roluri')}
@@ -34,7 +36,7 @@ window.pages.admin = {
         document.getElementById('adminUserForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            await api.post('/admin/users', body);
+            await api.post('/users', body);
             showAlert('Utilizator creat.', 'success');
             this.render();
         });
@@ -43,7 +45,7 @@ window.pages.admin = {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.saveRole;
                 const role = document.querySelector(`[data-role-user="${id}"]`).value;
-                await api.put('/admin/users/' + id + '/role', { role });
+                await api.put('/users/' + id, { role });
                 showAlert('Rol actualizat.', 'success');
             });
         });
@@ -51,7 +53,7 @@ window.pages.admin = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti utilizatorul?')) return;
-                await api.delete('/admin/users/' + btn.dataset.delete);
+                await api.delete('/users/' + btn.dataset.delete);
                 showAlert('Utilizator sters.', 'success');
                 this.render();
             });

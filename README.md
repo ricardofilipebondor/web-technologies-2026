@@ -28,12 +28,14 @@ Deschide: http://localhost:8000/frontend/index.html
 
 ```
 frontend/     HTML, CSS, JS (SPA hash router, fetch API)
-backend/      API REST JSON (server.php, controllers, services)
+backend/      API REST JSON stateless JWT (server.php, controllers, services)
 database/     SQLite, modele PDO, schema SQL
 docs/         RAPORT.html, ARCHITECTURE.md, DESIGN.md
 ```
 
-**Flux:** Browser → `frontend/*.html` → `fetch /backend/server.php/...` → controllers → SQLite
+**Flux:** Browser → `frontend/*.html` → `fetch /backend/server.php/...` + JWT Bearer → controllers → SQLite
+
+**Autentificare:** `POST /sessions` (login) → token JWT în `localStorage`; `GET /users/me`, `GET /menu` după login.
 
 ---
 

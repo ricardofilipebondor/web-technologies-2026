@@ -2,8 +2,7 @@ window.pages = window.pages || {};
 
 window.pages.dashboard = {
     async render() {
-        const res = await api.get('/dashboard');
-        const d = res.data;
+        const d = await api.get('/dashboard');
         const container = document.getElementById('page-content');
 
         container.innerHTML = `

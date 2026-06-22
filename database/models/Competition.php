@@ -17,11 +17,12 @@ class Competition
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO competitions (nume, locatie, data, tip, domeniu) VALUES (:nume, :locatie, :data, :tip, :domeniu)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

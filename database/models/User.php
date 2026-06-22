@@ -39,7 +39,7 @@ class User
         return $user ?: null;
     }
 
-    public static function create(string $username, string $email, string $password, string $roleName = 'antrenor'): void
+    public static function create(string $username, string $email, string $password, string $roleName = 'antrenor'): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('SELECT id FROM roles WHERE role_name = :role');
@@ -59,6 +59,7 @@ class User
             'email' => $email,
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ]);
+        return (int) $db->lastInsertId();
     }
 
     public static function all(): array
@@ -98,7 +99,7 @@ class User
         $stmt->execute(['id' => $id]);
     }
 
-    public static function createByAdmin(string $username, string $email, string $password, string $roleName): void
+    public static function createByAdmin(string $username, string $email, string $password, string $roleName): int
     {
         if (self::findByUsername($username)) {
             throw new RuntimeException('Username-ul exista deja.');
@@ -106,6 +107,6 @@ class User
         if (self::findByEmail($email)) {
             throw new RuntimeException('Email-ul este deja folosit.');
         }
-        self::create($username, $email, $password, $roleName);
+        return self::create($username, $email, $password, $roleName);
     }
 }

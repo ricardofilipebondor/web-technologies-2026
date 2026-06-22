@@ -22,11 +22,12 @@ class Group
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO groups (denumire, nivel, coach_id) VALUES (:denumire, :nivel, :coach_id)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

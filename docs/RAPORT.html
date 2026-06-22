@@ -100,7 +100,7 @@
 
             <li><strong>Frontend</strong> — HTML, CSS responsive, JavaScript vanilla, <code>fetch</code> asincron;</li>
 
-            <li><strong>Backend</strong> — PHP REST fără framework, <code>backend/server.php</code>;</li>
+            <li><strong>Backend</strong> — API REST stateless (JWT), PHP fără framework, <code>backend/server.php</code>;</li>
 
             <li><strong>Bază de date</strong> — SQLite via PDO, modele în <code>database/models/</code>.</li>
 
@@ -128,7 +128,7 @@
 
         <h2>3. Roluri și permisiuni</h2>
 
-        <p>Definite în <code>backend/config/app.php</code>. Verificare API: <code>AuthMiddleware::requireModule()</code>. Meniu UI: <code>GET /auth/menu</code> (filtrat pe rol).</p>
+        <p>Definite în <code>backend/config/app.php</code>. Verificare API: <code>AuthMiddleware::requireModule()</code> după validare JWT. Meniu UI: <code>GET /menu</code> (filtrat pe rol).</p>
 
         <table>
 
@@ -164,7 +164,7 @@
 
         </table>
 
-        <p>La înregistrare (<code>/auth/register</code>) se pot alege doar rolurile <code>antrenor</code> și <code>responsabil_financiar</code>. Rolul <code>administrator</code> se atribuie din modulul admin.</p>
+        <p>La înregistrare (<code>POST /users</code>) se pot alege doar rolurile <code>antrenor</code> și <code>responsabil_financiar</code>. Rolul <code>administrator</code> se atribuie din modulul admin (<code>GET /users</code>, <code>PUT /users/{id}</code>).</p>
 
     </section>
 
@@ -198,7 +198,7 @@
 
             <li>Profil cu participări și premii — <code>MembersService::profile()</code></li>
 
-            <li>Import/export CSV, JSON, XML</li>
+            <li>Import <code>POST /members/imports</code>; export <code>GET /members?format=csv|json|xml</code></li>
 
         </ul>
 
@@ -208,7 +208,7 @@
 
         <ul>
 
-            <li>Săli cu capacitate, dotări, intervale orare — <code>/halls</code></li>
+            <li>Săli cu capacitate, dotări, intervale orare — <code>/halls</code>, <code>POST /halls/{id}/slots</code></li>
 
             <li>Activități: antrenament, curs, workshop, simultan — <code>/activities</code></li>
 
@@ -226,7 +226,7 @@
 
             <li>Participări, punctaj, loc — <code>/participations</code></li>
 
-            <li>Clasamente — <code>/rankings</code>; export CSV/JSON/XML</li>
+            <li>Clasamente — <code>/rankings</code>; export <code>?format=csv|json|xml</code></li>
 
         </ul>
 
@@ -236,7 +236,7 @@
 
         <ul>
 
-            <li>Echipe, componență, rezultate — <code>/teams</code></li>
+            <li>Echipe, componență (<code>POST /teams/{id}/members</code>), rezultate — <code>/teams</code></li>
 
             <li>Grupe — <code>/groups</code></li>
 
@@ -264,7 +264,7 @@
 
         <ul>
 
-            <li>Gestionare utilizatori și roluri — <code>/admin</code></li>
+            <li>Gestionare utilizatori — <code>GET /users</code>, <code>POST /users</code>; roluri — <code>GET /roles</code>, <code>PUT /users/{id}</code></li>
 
         </ul>
 
@@ -286,7 +286,7 @@
 
                 <tr><td>XSS</td><td><code>escapeHtml()</code> la render dinamic</td></tr>
 
-                <tr><td>Autentificare</td><td>Sesiune PHP, cookie HttpOnly</td></tr>
+                <tr><td>Autentificare</td><td>JWT stateless (HS256), header <code>Authorization: Bearer</code>, token în <code>localStorage</code></td></tr>
 
                 <tr><td>Responsive</td><td>Breakpoints 992px, 768px în <code>style.css</code></td></tr>
 
@@ -320,7 +320,9 @@
 
                 <tr><td>Import/export CSV, JSON</td><td><code>backend/exports/</code></td></tr>
 
-                <tr><td>Modul administrare</td><td><code>/admin</code></td></tr>
+                <tr><td>API REST</td><td>Resurse JSON, HATEOAS (<code>_links</code>), coduri HTTP (201/204), erori RFC 7807</td></tr>
+
+                <tr><td>Modul administrare</td><td><code>GET /users</code>, <code>GET /roles</code></td></tr>
 
                 <tr><td>Template-uri UI</td><td><code>app.html</code>, <code>pages/*.js</code></td></tr>
 
@@ -368,17 +370,17 @@
 
         <ol>
 
-            <li>Autentificare pe <code>frontend/index.html</code>;</li>
+            <li>Autentificare pe <code>frontend/index.html</code> (<code>POST /sessions</code> → JWT);</li>
 
             <li>După login → <code>app.html</code>;</li>
 
-            <li>Meniu lateral din <code>GET /auth/menu</code>;</li>
+            <li>Meniu lateral din <code>GET /menu</code>;</li>
 
             <li>Navigare hash (<code>#/members</code> etc.) fără reîncărcare;</li>
 
             <li>Modulele încarcă date via API și afișează tabele/formulare;</li>
 
-            <li>CRUD prin POST/PUT/DELETE cu mesaje de confirmare.</li>
+            <li>CRUD prin POST/PUT/DELETE; răspunsuri REST (201 Created, 204 No Content).</li>
 
         </ol>
 

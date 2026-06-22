@@ -6,10 +6,9 @@ window.pages.halls = {
     },
 
     async showList() {
-        const res = await api.get('/halls');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Sali', 'Sali de sah', `<a href="#/halls/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Denumire','Capacitate','Actiuni'], res.data, h => `
+            ${renderTable(['Denumire','Capacitate','Actiuni'], api.items(await api.get('/halls')), h => `
                 <tr>
                     <td><strong>${escapeHtml(h.denumire)}</strong></td>
                     <td>${h.capacitate}</td>
@@ -31,7 +30,7 @@ window.pages.halls = {
 
     async showForm(id) {
         let h = { denumire:'', capacitate:10, dotari:'' };
-        if (id) h = (await api.get('/halls')).data.find(x => String(x.id) === String(id)) || h;
+        if (id) h = await api.get('/halls/' + id);
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Sala', '', `<a href="#/halls" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="hallForm">
@@ -51,8 +50,7 @@ window.pages.halls = {
     },
 
     async showSlots(id) {
-        const res = await api.get('/halls/' + id + '/slots');
-        const { hall, slots } = res.data;
+        const { hall, slots } = await api.get('/halls/' + id + '/slots');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Intervale: ' + hall.denumire, '', `<a href="#/halls" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="slotForm">
@@ -70,13 +68,12 @@ window.pages.halls = {
         document.getElementById('slotForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            body.hall_id = id;
-            await api.post('/halls/slots', body);
+            await api.post('/halls/' + id + '/slots', body);
             this.showSlots(id);
         });
         document.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/halls/slots/' + btn.dataset.del);
+                await api.delete('/halls/' + id + '/slots/' + btn.dataset.del);
                 this.showSlots(id);
             });
         });
@@ -90,10 +87,9 @@ window.pages.activities = {
     },
 
     async showList() {
-        const res = await api.get('/activities');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Activitati', 'Antrenamente si evenimente', `<a href="#/activities/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Titlu','Tip','Start','Sala','Antrenor','Actiuni'], res.data, a => `
+            ${renderTable(['Titlu','Tip','Start','Sala','Antrenor','Actiuni'], api.items(await api.get('/activities')), a => `
                 <tr>
                     <td><strong>${escapeHtml(a.titlu)}</strong></td>
                     <td>${escapeHtml(a.tip)}</td>
@@ -116,9 +112,10 @@ window.pages.activities = {
     },
 
     async showForm(id) {
-        const meta = (await api.get('/activities/meta')).data;
+        const halls = api.items(await api.get('/halls'));
+        const coaches = api.items(await api.get('/coaches')).filter(c => c.rol === 'antrenor');
         let a = { titlu:'', tip:'antrenament', data_start:'', data_end:'', hall_id:'', coach_id:'' };
-        if (id) a = (await api.get('/activities')).data.find(x => String(x.id) === String(id)) || a;
+        if (id) a = await api.get('/activities/' + id);
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Activitate', '', `<a href="#/activities" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="actForm">
@@ -128,8 +125,8 @@ window.pages.activities = {
                 </select>`)}
                 ${labeledField('Data start', `<input class="input" name="data_start" type="datetime-local" value="${escapeHtml((a.data_start||'').replace(' ','T').slice(0,16))}">`)}
                 ${labeledField('Data end', `<input class="input" name="data_end" type="datetime-local" value="${escapeHtml((a.data_end||'').replace(' ','T').slice(0,16))}">`)}
-                ${labeledField('Sala', `<select class="select" name="hall_id">${meta.halls.map(h => `<option value="${h.id}" ${String(a.hall_id)===String(h.id)?'selected':''}>${escapeHtml(h.denumire)}</option>`).join('')}</select>`)}
-                ${labeledField('Antrenor', `<select class="select" name="coach_id">${meta.coaches.map(c => `<option value="${c.id}" ${String(a.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
+                ${labeledField('Sala', `<select class="select" name="hall_id">${halls.map(h => `<option value="${h.id}" ${String(a.hall_id)===String(h.id)?'selected':''}>${escapeHtml(h.denumire)}</option>`).join('')}</select>`)}
+                ${labeledField('Antrenor', `<select class="select" name="coach_id">${coaches.map(c => `<option value="${c.id}" ${String(a.coach_id)===String(c.id)?'selected':''}>${escapeHtml(c.nume)}</option>`).join('')}</select>`)}
                 <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('actForm').addEventListener('submit', async e => {

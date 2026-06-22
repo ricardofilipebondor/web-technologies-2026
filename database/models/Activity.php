@@ -22,7 +22,7 @@ class Activity
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -30,6 +30,7 @@ class Activity
             VALUES (:titlu, :tip, :data_start, :data_end, :hall_id, :coach_id)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

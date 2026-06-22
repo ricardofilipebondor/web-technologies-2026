@@ -4,7 +4,7 @@ Fișiere: `frontend/app.html`, `frontend/index.html`, `frontend/css/style.css`, 
 
 ## Layout
 
-App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /auth/menu` și afișează doar modulele permise rolului curent (`backend/config/app.php`).
+App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /menu` și afișează doar modulele permise rolului curent (`backend/config/app.php`).
 
 ## Stil
 
@@ -22,7 +22,8 @@ App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /a
 ## Interacțiune
 
 - Navigare hash (`#/members`, `#/dashboard`) fără reîncărcare pagină.
-- Date încărcate asincron cu `fetch`; indicator „Se încarcă..." la așteptare.
+- Date încărcate asincron cu `fetch`; token JWT în `localStorage`, trimis ca `Authorization: Bearer`.
+- Export fișiere prin `api.download()` (autentificat).
 - Mesaje flash la salvare, ștergere, import.
 
 ## Accesibilitate

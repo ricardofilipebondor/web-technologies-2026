@@ -4,7 +4,8 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value;
 
     try {
-        await api.post('/auth/login', { username, password });
+        const res = await api.post('/sessions', { username, password });
+        api.setToken(res.access_token);
         window.location.href = 'app.html';
     } catch (err) {
         document.getElementById('loginMessage').textContent = err.message;
@@ -20,7 +21,7 @@ async function handleRegister(e) {
     const role = document.getElementById('regRole').value;
 
     try {
-        await api.post('/auth/register', { username, email, password, password_confirm, role });
+        await api.post('/users', { username, email, password, password_confirm, role });
         document.getElementById('registerMessage').textContent = 'Cont creat. Te poti autentifica.';
         document.getElementById('registerForm').reset();
     } catch (err) {

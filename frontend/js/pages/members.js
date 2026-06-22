@@ -12,15 +12,15 @@ window.pages.members = {
         const categorie = document.getElementById('memberCat')?.value || '';
         const qs = new URLSearchParams({ search, categorie }).toString();
         const res = await api.get('/members?' + qs);
-        const members = res.data;
+        const members = api.items(res);
         const container = document.getElementById('page-content');
 
         container.innerHTML = `
             ${pageHeader('Membri', 'Gestioneaza membrii clubului', `
                 <a href="#/members/import" class="btn btn-secondary btn-sm">Import</a>
-                <a href="${api.exportUrl('/members/export?format=csv')}" class="btn btn-secondary btn-sm">CSV</a>
-                <a href="${api.exportUrl('/members/export?format=json')}" class="btn btn-secondary btn-sm">JSON</a>
-                <a href="${api.exportUrl('/members/export?format=xml')}" class="btn btn-secondary btn-sm">XML</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="csv">CSV</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="json">JSON</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="xml">XML</button>
                 <a href="#/members/form" class="btn btn-primary btn-sm">+ Adauga</a>
             `)}
             <form class="filter-bar" id="memberFilter">
@@ -47,6 +47,9 @@ window.pages.members = {
         `;
 
         document.getElementById('memberFilter').addEventListener('submit', e => { e.preventDefault(); this.showList(); });
+        container.querySelectorAll('[data-export]').forEach(btn => {
+            btn.addEventListener('click', () => api.download('/members?format=' + btn.dataset.export, 'membri.' + btn.dataset.export));
+        });
         container.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti membru?')) return;
@@ -59,7 +62,7 @@ window.pages.members = {
 
     async showProfile(id) {
         const res = await api.get('/members/' + id);
-        const { member, participations, prizes, groups } = res.data;
+        const { member, participations, prizes, groups } = res;
         const container = document.getElementById('page-content');
 
         container.innerHTML = `
@@ -85,12 +88,12 @@ window.pages.members = {
     },
 
     async showForm(id) {
-        const coachesRes = await api.get('/members/coaches');
-        const coaches = coachesRes.data;
+        const coachesRes = await api.get('/coaches');
+        const coaches = api.items(coachesRes).filter(c => c.rol === 'antrenor');
         let member = { nume:'', prenume:'', data_nasterii:'', email:'', telefon:'', categorie:'amator', rating:0, adresa:'', coach_id:'' };
         if (id) {
             const res = await api.get('/members/' + id);
-            member = res.data.member;
+            member = res.member;
         }
 
         const container = document.getElementById('page-content');
@@ -142,9 +145,9 @@ window.pages.members = {
             e.preventDefault();
             const fd = new FormData(e.target);
             try {
-                const res = await api.upload('/members/import-file', fd);
-                document.getElementById('importResult').textContent = res.message + ' (' + res.data.imported + ' membri)';
-                showAlert(res.message, 'success');
+                const res = await api.upload('/members/imports/file', fd);
+                document.getElementById('importResult').textContent = 'Import reusit (' + res.imported + ' membri)';
+                showAlert('Import reusit.', 'success');
             } catch (err) {
                 document.getElementById('importResult').textContent = err.message;
             }

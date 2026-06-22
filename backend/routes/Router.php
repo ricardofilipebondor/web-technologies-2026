@@ -50,6 +50,6 @@ class Router
             }
         }
 
-        Response::error('Ruta negasita.', 404);
+        Response::problem('Ruta negasita.', 404);
     }
 }

@@ -5,9 +5,19 @@ class MembersApiController
     public function index(): void
     {
         AuthMiddleware::requireModule('members');
+
+        $format = $_GET['format'] ?? '';
+        if ($format !== '') {
+            $this->export($format);
+            return;
+        }
+
         $search = $_GET['search'] ?? '';
         $categorie = $_GET['categorie'] ?? '';
-        Response::ok(Member::all($search, $categorie));
+        RestHelper::index('members', '/members', Member::all($search, $categorie), [
+            'coaches' => '/coaches',
+            'imports' => '/members/imports',
+        ]);
     }
 
     public function show(array $params): void
@@ -15,9 +25,14 @@ class MembersApiController
         AuthMiddleware::requireModule('members');
         $profile = (new MembersService())->profile((int) $params['id']);
         if (!$profile) {
-            Response::error('Membru negasit.', 404);
+            Response::problem('Membru negasit.', 404);
         }
-        Response::ok($profile);
+        $profile['_links'] = Hateoas::links([
+            'self' => '/members/' . $params['id'],
+            'collection' => '/members',
+            'prizes' => '/members/' . $params['id'] . '/prizes',
+        ]);
+        Response::resource($profile);
     }
 
     public function store(): void
@@ -25,36 +40,89 @@ class MembersApiController
         AuthMiddleware::requireModule('members');
         $data = $this->formData();
         if ($data['nume'] === '' || $data['prenume'] === '' || $data['email'] === '') {
-            Response::error('Completati campurile obligatorii.');
+            Response::problem('Completati campurile obligatorii.');
         }
-        Member::create($data);
-        Response::ok(null, 'Membru adaugat cu succes.');
+        $id = Member::create($data);
+        $member = Member::find($id);
+        RestHelper::created('/members', $id, $member, ['coaches' => '/coaches']);
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('members');
-        Member::update((int) $params['id'], $this->formData());
-        Response::ok(null, 'Membru actualizat.');
+        $id = (int) $params['id'];
+        Member::update($id, $this->formData());
+        RestHelper::updated('/members/' . $id, Member::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('members');
         Member::delete((int) $params['id']);
-        Response::ok(null, 'Membru sters.');
+        RestHelper::deleted();
     }
 
-    public function coaches(): void
+    public function prizes(array $params): void
     {
-        AuthMiddleware::requireModule('members');
-        Response::ok(Coach::getAntrenori());
+        AuthMiddleware::requireModule('prizes');
+        $memberId = (int) $params['id'];
+        $member = Member::find($memberId);
+        if (!$member) {
+            Response::problem('Membru negasit.', 404);
+        }
+        Response::resource([
+            'member' => Hateoas::item($member, '/members/' . $memberId),
+            'items' => array_map(
+                fn($p) => Hateoas::item($p, '/prizes/' . $p['id']),
+                Prize::byMember($memberId)
+            ),
+            '_links' => Hateoas::links(['self' => '/members/' . $memberId . '/prizes']),
+        ]);
     }
 
-    public function export(): void
+    public function import(): void
     {
         AuthMiddleware::requireModule('members');
-        $format = $_GET['format'] ?? 'csv';
+        $body = AuthMiddleware::getJsonBody();
+        $rows = $body['rows'] ?? [];
+        $count = $this->importRows($rows);
+        Response::created([
+            'imported' => $count,
+            '_links' => Hateoas::links(['self' => '/members/imports', 'members' => '/members']),
+        ], '/members/imports');
+    }
+
+    public function importFile(): void
+    {
+        AuthMiddleware::requireModule('members');
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            Response::problem('Selectati un fisier valid.');
+        }
+
+        $type = $_POST['type'] ?? 'csv';
+        $tmp = $_FILES['file']['tmp_name'];
+        $rows = [];
+
+        if ($type === 'csv') {
+            $rows = DataImporter::fromCsv($tmp);
+        } elseif ($type === 'json') {
+            $rows = DataImporter::fromJson($tmp);
+        } elseif ($type === 'xml') {
+            $rows = DataImporter::fromXml($tmp, 'member');
+        } else {
+            Response::problem('Format invalid.');
+        }
+
+        $count = $this->importRows($rows);
+        Response::created([
+            'imported' => $count,
+            '_links' => Hateoas::links(['self' => '/members/imports', 'members' => '/members']),
+        ], '/members/imports');
+    }
+
+    private function export(string $format): void
+    {
         $members = Member::all();
 
         if ($format === 'csv') {
@@ -69,42 +137,7 @@ class MembersApiController
         } elseif ($format === 'xml') {
             DataExporter::toXml($members, 'members', 'member', 'membri.xml');
         }
-        Response::error('Format invalid.');
-    }
-
-    public function import(): void
-    {
-        AuthMiddleware::requireModule('members');
-        $body = AuthMiddleware::getJsonBody();
-        $rows = $body['rows'] ?? [];
-        $count = $this->importRows($rows);
-        Response::ok(['imported' => $count], "Import reusit: $count membri adaugati.");
-    }
-
-    public function importFile(): void
-    {
-        AuthMiddleware::requireModule('members');
-
-        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-            Response::error('Selectati un fisier valid.');
-        }
-
-        $type = $_POST['type'] ?? 'csv';
-        $tmp = $_FILES['file']['tmp_name'];
-        $rows = [];
-
-        if ($type === 'csv') {
-            $rows = DataImporter::fromCsv($tmp);
-        } elseif ($type === 'json') {
-            $rows = DataImporter::fromJson($tmp);
-        } elseif ($type === 'xml') {
-            $rows = DataImporter::fromXml($tmp, 'member');
-        } else {
-            Response::error('Format invalid.');
-        }
-
-        $count = $this->importRows($rows);
-        Response::ok(['imported' => $count], "Import reusit: $count membri adaugati.");
+        Response::problem('Format invalid.');
     }
 
     private function importRows(array $rows): int

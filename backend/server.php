@@ -1,10 +1,5 @@
 <?php
 
-session_start([
-    'cookie_path' => '/',
-    'cookie_httponly' => true,
-]);
-
 require_once __DIR__ . '/bootstrap.php';
 
 foreach (glob(__DIR__ . '/controllers/*.php') as $file) {
@@ -25,11 +20,13 @@ if ($path === '' || $path[0] !== '/') {
     $path = '/' . ltrim($path, '/');
 }
 
+AuthMiddleware::authenticate();
+
 $router = new Router();
 registerRoutes($router);
 
 try {
     $router->dispatch($method, $path);
 } catch (Throwable $e) {
-    Response::error($e->getMessage(), 500);
+    Response::problem($e->getMessage(), 500);
 }

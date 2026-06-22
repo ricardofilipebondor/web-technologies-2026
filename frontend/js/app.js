@@ -2,16 +2,19 @@ let currentUser = null;
 
 async function initApp() {
     try {
-        const res = await api.get('/auth/me');
-        currentUser = res.data;
+        if (!api.getToken()) {
+            throw new Error('Neautentificat');
+        }
+        currentUser = await api.get('/users/me');
         document.getElementById('topbarUser').innerHTML =
             `<strong>${escapeHtml(currentUser.username)}</strong> · ${escapeHtml(currentUser.role)}`;
 
-        const menuRes = await api.get('/auth/menu');
-        renderSidebar(menuRes.data);
+        const menuRes = await api.get('/menu');
+        renderSidebar(api.items(menuRes));
         initSidebarToggle();
         initRouter();
     } catch (err) {
+        api.clearToken();
         window.location.href = 'index.html';
     }
 }
@@ -64,8 +67,9 @@ function initSidebarToggle() {
 
 document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     try {
-        await api.post('/auth/logout');
+        await api.delete('/sessions');
     } finally {
+        api.clearToken();
         window.location.href = 'index.html';
     }
 });

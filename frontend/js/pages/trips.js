@@ -6,10 +6,9 @@ window.pages.trips = {
     },
 
     async showList() {
-        const res = await api.get('/trips');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Deplasari', 'Deplasari echipa', `<a href="#/trips/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Destinatie','Plecare','Intoarcere','Echipa','Actiuni'], res.data, t => `
+            ${renderTable(['Destinatie','Plecare','Intoarcere','Echipa','Actiuni'], api.items(await api.get('/trips')), t => `
                 <tr>
                     <td><strong>${escapeHtml(t.destinatie)}</strong></td>
                     <td>${escapeHtml(t.data_plecare)}</td>
@@ -32,9 +31,9 @@ window.pages.trips = {
     },
 
     async showForm(id) {
-        const meta = (await api.get('/trips/meta')).data;
+        const teams = api.items(await api.get('/teams'));
         let t = { destinatie:'', data_plecare:'', data_intoarcere:'', scop:'', team_id:'' };
-        if (id) t = (await api.get('/trips')).data.find(x => String(x.id) === String(id)) || t;
+        if (id) t = await api.get('/trips/' + id);
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Deplasare', '', `<a href="#/trips" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="tripForm">
@@ -42,7 +41,7 @@ window.pages.trips = {
                 ${labeledField('Data plecare', `<input class="input" name="data_plecare" type="date" value="${escapeHtml(t.data_plecare)}">`)}
                 ${labeledField('Data intoarcere', `<input class="input" name="data_intoarcere" type="date" value="${escapeHtml(t.data_intoarcere)}">`)}
                 ${labeledField('Scop', `<input class="input" name="scop" value="${escapeHtml(t.scop)}">`)}
-                ${labeledField('Echipa', `<select class="select" name="team_id"><option value="">— Fara echipa —</option>${meta.teams.map(tm => `<option value="${tm.id}" ${String(t.team_id)===String(tm.id)?'selected':''}>${escapeHtml(tm.denumire)}</option>`).join('')}</select>`)}
+                ${labeledField('Echipa', `<select class="select" name="team_id"><option value="">— Fara echipa —</option>${teams.map(tm => `<option value="${tm.id}" ${String(t.team_id)===String(tm.id)?'selected':''}>${escapeHtml(tm.denumire)}</option>`).join('')}</select>`)}
                 <button class="btn btn-primary form-actions">Salveaza</button>
             </form>`;
         document.getElementById('tripForm').addEventListener('submit', async e => {
@@ -55,8 +54,7 @@ window.pages.trips = {
     },
 
     async showMembers(id) {
-        const res = await api.get('/trips/' + id + '/members');
-        const { trip, members, available } = res.data;
+        const { trip, members, available } = await api.get('/trips/' + id + '/members');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri deplasare: ' + trip.destinatie, '', `<a href="#/trips" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addForm">
@@ -69,7 +67,7 @@ window.pages.trips = {
         `;
         document.getElementById('addForm').addEventListener('submit', async e => {
             e.preventDefault();
-            await api.post('/trips/members', { trip_id: id, member_id: new FormData(e.target).get('member_id') });
+            await api.post('/trips/' + id + '/members', { member_id: new FormData(e.target).get('member_id') });
             this.showMembers(id);
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {
@@ -88,10 +86,9 @@ window.pages.expenses = {
     },
 
     async showList() {
-        const res = await api.get('/expenses');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Cheltuieli', 'Cheltuieli deplasari', `<a href="#/expenses/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Deplasare','Tip','Suma','Observatii','Actiuni'], res.data, e => `
+            ${renderTable(['Deplasare','Tip','Suma','Observatii','Actiuni'], api.items(await api.get('/expenses')), e => `
                 <tr>
                     <td>${escapeHtml(e.trip_destinatie || '')}</td>
                     <td>${escapeHtml(e.tip)}</td>
@@ -113,13 +110,13 @@ window.pages.expenses = {
     },
 
     async showForm(id) {
-        const meta = (await api.get('/expenses/meta')).data;
+        const trips = api.items(await api.get('/trips'));
         let e = { trip_id:'', tip:'transport', suma:0, observatii:'' };
-        if (id) e = (await api.get('/expenses')).data.find(x => String(x.id) === String(id)) || e;
+        if (id) e = await api.get('/expenses/' + id);
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Cheltuiala', '', `<a href="#/expenses" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="expForm">
-                ${labeledField('Deplasare', `<select class="select" name="trip_id">${meta.trips.map(t => `<option value="${t.id}" ${String(e.trip_id)===String(t.id)?'selected':''}>${escapeHtml(t.destinatie)}</option>`).join('')}</select>`)}
+                ${labeledField('Deplasare', `<select class="select" name="trip_id">${trips.map(t => `<option value="${t.id}" ${String(e.trip_id)===String(t.id)?'selected':''}>${escapeHtml(t.destinatie)}</option>`).join('')}</select>`)}
                 ${labeledField('Tip cheltuiala', `<select class="select" name="tip">${['transport','cazare','masa'].map(t => `<option value="${t}" ${e.tip===t?'selected':''}>${t}</option>`).join('')}</select>`)}
                 ${labeledField('Suma (RON)', `<input class="input" name="suma" type="number" step="0.01" value="${e.suma}">`)}
                 ${labeledField('Observatii', `<input class="input" name="observatii" value="${escapeHtml(e.observatii)}">`)}
@@ -143,10 +140,9 @@ window.pages.reimbursements = {
     },
 
     async showList() {
-        const res = await api.get('/reimbursements');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Deconturi', 'Rapoarte de decont')}
-            ${renderTable(['Destinatie','Plecare','Echipa','Actiuni'], res.data, t => `
+            ${renderTable(['Destinatie','Plecare','Echipa','Actiuni'], api.items(await api.get('/reimbursements')), t => `
                 <tr>
                     <td><strong>${escapeHtml(t.destinatie)}</strong></td>
                     <td>${escapeHtml(t.data_plecare)}</td>
@@ -157,13 +153,12 @@ window.pages.reimbursements = {
     },
 
     async showDetail(id) {
-        const res = await api.get('/reimbursements/' + id);
-        const { trip, members, expenses, total } = res.data;
+        const { trip, members, expenses, total } = await api.get('/reimbursements/' + id);
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Decont: ' + trip.destinatie, '', `
                 <a href="#/reimbursements" class="btn btn-secondary btn-sm">Inapoi</a>
-                <a href="${api.exportUrl('/reimbursements/' + id + '/export?format=csv')}" class="btn btn-secondary btn-sm">Export CSV</a>
-                <a href="${api.exportUrl('/reimbursements/' + id + '/export?format=pdf')}" class="btn btn-secondary btn-sm">Export PDF</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="csv">Export CSV</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="pdf">Export PDF</button>
             `)}
             <div class="card card-body">
                 <p>Echipa: ${escapeHtml(trip.team_nume || '—')}</p>
@@ -177,5 +172,11 @@ window.pages.reimbursements = {
                 ${renderTable(['Tip','Suma','Observatii'], expenses, e => `
                     <tr><td>${escapeHtml(e.tip)}</td><td>${e.suma} RON</td><td>${escapeHtml(e.observatii || '')}</td></tr>`)}
             </div>`;
+        document.querySelectorAll('[data-export]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const fmt = btn.dataset.export;
+                api.download('/reimbursements/' + id + '/export?format=' + fmt, 'decont.' + fmt);
+            });
+        });
     }
 };

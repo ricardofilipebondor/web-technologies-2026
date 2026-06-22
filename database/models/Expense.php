@@ -29,11 +29,12 @@ class Expense
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO expenses (trip_id, tip, suma, observatii) VALUES (:trip_id, :tip, :suma, :observatii)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

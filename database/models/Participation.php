@@ -24,7 +24,7 @@ class Participation
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -32,6 +32,7 @@ class Participation
             VALUES (:member_id, :competition_id, :punctaj, :loc_obtinut)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

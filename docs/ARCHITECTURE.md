@@ -1,6 +1,6 @@
 # Arhitectură eSC — Model C4
 
-SPA + API REST PHP, fără SSR. Cerințe: [web-projects.html](https://edu.info.uaic.ro/web-technologies/web-projects.html)
+SPA + API REST PHP stateless (JWT), fără SSR. Cerințe: [web-projects.html](https://edu.info.uaic.ro/web-technologies/web-projects.html)
 
 ---
 
@@ -33,7 +33,8 @@ flowchart TB
         ROUTER[router.php]
         API[backend/server.php]
         CTRL[Controllers]
-        MW[AuthMiddleware]
+        MW[AuthMiddleware + JWT]
+        JWT[JwtService]
         PLG[PluginManager]
         SVC[Services]
         EXP[Exports CSV/JSON/XML/PDF]
@@ -45,7 +46,8 @@ flowchart TB
     end
 
     HTML --> JS
-    JS -->|fetch| ROUTER --> API --> MW --> CTRL
+    JS -->|fetch + Bearer JWT| ROUTER --> API --> MW --> CTRL
+    MW --> JWT
     CTRL --> SVC --> MODEL --> DB
     CTRL --> MODEL
     CTRL --> EXP
@@ -58,19 +60,21 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    R[Routes api.php] --> A1[AuthApiController]
+    R[Routes api.php] --> S1[SessionsApiController]
+    R --> S2[UsersApiController]
+    R --> S3[MenuApiController]
     R --> A2[MembersApiController]
     R --> A3[DashboardApiController]
     R --> A4[ModuleApiControllers]
-    R --> A5[AdminApiController]
-    A2 --> S1[MembersService] --> M[Models]
-    A4 --> S2[CompetitionsService]
-    A4 --> S3[TeamsService]
-    A4 --> S4[TripsService]
-    S2 & S3 & S4 --> M
+    R --> A5[ResourceApiControllers]
+    A2 --> SVC1[MembersService] --> M[Models]
+    A4 --> SVC2[CompetitionsService]
+    A4 --> SVC3[TeamsService]
+    A4 --> SVC4[TripsService]
+    SVC2 & SVC3 & SVC4 --> M
     A4 --> M
     A3 --> M
-    A5 --> M
+    S2 --> M
 ```
 
 ---
@@ -80,9 +84,10 @@ flowchart LR
 ```mermaid
 flowchart TB
     U[Utilizator] --> LOGIN[index.html]
-    LOGIN -->|autentificat| APP[app.html]
-    APP --> AUTH[POST /auth/login]
-    APP --> MENU[GET /auth/menu]
+    LOGIN -->|POST /sessions| TOKEN[JWT în localStorage]
+    TOKEN --> APP[app.html]
+    APP --> ME[GET /users/me]
+    APP --> MENU[GET /menu]
     MENU --> PAGE[pages/*.js]
     PAGE --> API[backend/server.php]
 ```
@@ -103,12 +108,13 @@ sequenceDiagram
 
     U->>P: #/members
     P->>A: GET /members
-    A->>S: fetch + cookie sesiune
+    A->>S: fetch + Authorization Bearer
+    S->>S: AuthMiddleware::authenticate()
     S->>C: index()
     C->>C: requireModule members
     C->>M: all()
     M->>DB: SELECT
-    DB-->>P: JSON
+    DB-->>P: JSON + _links HATEOAS
     P-->>U: tabel HTML
 ```
 
@@ -128,12 +134,36 @@ Modulul *reimbursements* agregă date din `trips`, `expenses`, `trip_members` (f
 
 ```mermaid
 flowchart TB
-    REQ[Request API] --> SESS{Sesiune validă?}
-    SESS -->|Nu| E401[401]
-    SESS -->|Da| MOD{userCanAccess modul?}
+    REQ[Request API] --> HDR{Header Authorization Bearer?}
+    HDR -->|Nu / invalid| E401[401]
+    HDR -->|JWT valid| MOD{userCanAccess modul?}
     MOD -->|Nu| E403[403]
     MOD -->|Da| OK[Controller]
 ```
+
+Autentificare **stateless**: `JwtService` (HS256) emite token la `POST /sessions`; clientul îl trimite la fiecare cerere. Fără `session_start()` sau cookie de sesiune.
+
+| Resursă | Metodă | Rol |
+|---------|--------|-----|
+| `/sessions` | POST | Login public → `access_token` |
+| `/sessions` | DELETE | Logout (client șterge tokenul) |
+| `/users` | POST | Înregistrare publică sau creare admin |
+| `/users/me` | GET | Utilizator curent |
+| `/users` | GET | Listă utilizatori (admin) |
+| `/users/{id}` | PUT / DELETE | Rol / ștergere (admin) |
+| `/roles` | GET | Roluri disponibile (admin) |
+| `/menu` | GET | Elemente meniu filtrate pe rol |
+
+---
+
+## 7b. Convenții API REST
+
+- **Resurse** ca URI-uri la plural (`/members`, `/teams/{id}/members`)
+- **Verbe HTTP**: GET (citire), POST (creare → 201 + `Location`), PUT (actualizare → 200), DELETE (ștergere → 204)
+- **Reprezentări** JSON directe, fără envelope `{ success, data }`
+- **Erori** RFC 7807: `{ type, title, status, detail }`
+- **HATEOAS**: câmp `_links` pe resurse și colecții (`RestHelper`, `Hateoas`)
+- **Export**: query `?format=csv|json|xml` pe colecții (ex. `GET /members?format=csv`)
 
 ---
 
@@ -225,11 +255,11 @@ flowchart LR
 | Etapă | Conținut |
 |-------|----------|
 | 1 | `database.sql`, `install.php` |
-| 2 | `server.php`, Router, Auth |
+| 2 | `server.php`, Router, JWT, Auth |
 | 3 | `app.html`, hash router |
 | 4 | 15 plugin-uri |
 | 5 | CSV, JSON, XML, PDF |
-| 6 | `AdminApiController`, permisiuni |
+| 6 | `UsersApiController`, permisiuni |
 | 7 | RAPORT, diagrame, film |
 
 ---
@@ -240,7 +270,8 @@ flowchart LR
 |-------|------|
 | Entry | `router.php`, `backend/server.php` |
 | Rute | `backend/routes/api.php` |
-| Securitate | `backend/middleware/AuthMiddleware.php` |
+| Securitate | `backend/middleware/AuthMiddleware.php`, `backend/services/JwtService.php` |
+| REST helpers | `backend/utils/Response.php`, `Hateoas.php`, `RestHelper.php` |
 | Roluri | `backend/config/app.php` |
 | Client | `frontend/js/api.js`, `frontend/js/router.js` |
 | Schema | `database/schema/database.sql` |

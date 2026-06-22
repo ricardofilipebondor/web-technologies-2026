@@ -7,10 +7,9 @@ window.pages.teams = {
     },
 
     async showList() {
-        const res = await api.get('/teams');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Echipe', 'Echipe de performanta', `<a href="#/teams/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Denumire','Descriere','Actiuni'], res.data, t => `
+            ${renderTable(['Denumire','Descriere','Actiuni'], api.items(await api.get('/teams')), t => `
                 <tr>
                     <td><strong>${escapeHtml(t.denumire)}</strong></td>
                     <td>${escapeHtml(t.descriere || '')}</td>
@@ -35,7 +34,7 @@ window.pages.teams = {
         let t = { denumire:'', descriere:'' };
         if (id) {
             const res = await api.get('/teams/' + id);
-            t = res.data.team;
+            t = res.team;
         }
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Echipa', '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
@@ -55,7 +54,7 @@ window.pages.teams = {
 
     async showMembers(id) {
         const res = await api.get('/teams/' + id + '/members');
-        const { team, members, available } = res.data;
+        const { team, members, available } = res;
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri echipa: ' + team.denumire, '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addMemberForm">
@@ -69,7 +68,7 @@ window.pages.teams = {
         document.getElementById('addMemberForm').addEventListener('submit', async e => {
             e.preventDefault();
             const member_id = new FormData(e.target).get('member_id');
-            await api.post('/teams/members', { team_id: id, member_id });
+            await api.post('/teams/' + id + '/members', { member_id });
             this.showMembers(id);
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {
@@ -82,7 +81,7 @@ window.pages.teams = {
 
     async showResults(id) {
         const res = await api.get('/teams/' + id + '/results');
-        const { team, results, competitions } = res.data;
+        const { team, results, competitions } = res;
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Rezultate: ' + team.denumire, '', `<a href="#/teams" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="card card-body" id="resultForm">
@@ -98,14 +97,13 @@ window.pages.teams = {
         document.getElementById('resultForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            body.team_id = id;
             body.punctaj_total = parseFloat(body.punctaj_total) || 0;
-            await api.post('/teams/results', body);
+            await api.post('/teams/' + id + '/results', body);
             this.showResults(id);
         });
         document.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/teams/results/' + btn.dataset.del);
+                await api.delete('/teams/' + id + '/results/' + btn.dataset.del);
                 this.showResults(id);
             });
         });
@@ -120,10 +118,9 @@ window.pages.groups = {
     },
 
     async showList() {
-        const res = await api.get('/groups');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Grupe', 'Grupe de antrenament', `<a href="#/groups/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Denumire','Nivel','Antrenor','Actiuni'], res.data, g => `
+            ${renderTable(['Denumire','Nivel','Antrenor','Actiuni'], api.items(await api.get('/groups')), g => `
                 <tr>
                     <td><strong>${escapeHtml(g.denumire)}</strong></td>
                     <td><span class="badge">${escapeHtml(g.nivel)}</span></td>
@@ -145,10 +142,10 @@ window.pages.groups = {
     },
 
     async showForm(id) {
-        const coaches = (await api.get('/groups/coaches')).data;
+        const coaches = api.items(await api.get('/coaches')).filter(c => c.rol === 'antrenor');
         let g = { denumire:'', nivel:'incepatori', coach_id:'' };
         if (id) {
-            g = (await api.get('/groups')).data.find(x => String(x.id) === String(id)) || g;
+            g = await api.get('/groups/' + id);
         }
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Grup', '', `<a href="#/groups" class="btn btn-secondary btn-sm">Inapoi</a>`)}
@@ -170,8 +167,7 @@ window.pages.groups = {
     },
 
     async showMembers(id) {
-        const res = await api.get('/groups/' + id + '/members');
-        const { group, members, available } = res.data;
+        const { group, members, available } = await api.get('/groups/' + id + '/members');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Membri grup: ' + group.denumire, '', `<a href="#/groups" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <form class="filter-bar" id="addForm">
@@ -184,7 +180,7 @@ window.pages.groups = {
         `;
         document.getElementById('addForm').addEventListener('submit', async e => {
             e.preventDefault();
-            await api.post('/groups/members', { group_id: id, member_id: new FormData(e.target).get('member_id') });
+            await api.post('/groups/' + id + '/members', { member_id: new FormData(e.target).get('member_id') });
             this.showMembers(id);
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {

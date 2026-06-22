@@ -4,18 +4,12 @@ class CoachesApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('coaches');
-        Response::ok(Coach::all());
+        RestHelper::index('coaches', '/coaches', Coach::all());
     }
 
     public function show(array $params): void
     {
-        AuthMiddleware::requireModule('coaches');
-        $coach = Coach::find((int) $params['id']);
-        if (!$coach) {
-            Response::error('Inregistrare negasita.', 404);
-        }
-        Response::ok($coach);
+        RestHelper::show('coaches', '/coaches/' . $params['id'], Coach::find((int) $params['id']));
     }
 
     public function store(): void
@@ -23,24 +17,25 @@ class CoachesApiController
         AuthMiddleware::requireModule('coaches');
         $data = $this->formData();
         if ($data['nume'] === '' || $data['email'] === '') {
-            Response::error('Completati campurile obligatorii.');
+            Response::problem('Completati campurile obligatorii.');
         }
-        Coach::create($data);
-        Response::ok(null, 'Inregistrare adaugata.');
+        $id = Coach::create($data);
+        RestHelper::created('/coaches', $id, Coach::find($id));
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('coaches');
-        Coach::update((int) $params['id'], $this->formData());
-        Response::ok(null, 'Inregistrare actualizata.');
+        $id = (int) $params['id'];
+        Coach::update($id, $this->formData());
+        RestHelper::updated('/coaches/' . $id, Coach::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('coaches');
         Coach::delete((int) $params['id']);
-        Response::ok(null, 'Inregistrare stearsa.');
+        RestHelper::deleted();
     }
 
     private function formData(): array
@@ -61,47 +56,57 @@ class TeamsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('teams');
-        Response::ok(Team::all());
+        RestHelper::index('teams', '/teams', Team::all());
     }
 
     public function show(array $params): void
     {
         AuthMiddleware::requireModule('teams');
-        $data = (new TeamsService())->performanceHistory((int) $params['id']);
-        if (empty($data)) {
-            Response::error('Echipa negasita.', 404);
+        $id = (int) $params['id'];
+        $team = Team::find($id);
+        if (!$team) {
+            Response::problem('Echipa negasita.', 404);
         }
-        Response::ok($data);
+        $data = (new TeamsService())->performanceHistory($id);
+        $data['_links'] = Hateoas::links([
+            'self' => '/teams/' . $id,
+            'members' => '/teams/' . $id . '/members',
+            'results' => '/teams/' . $id . '/results',
+        ]);
+        Response::resource($data);
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('teams');
         $body = AuthMiddleware::getJsonBody();
-        Team::create([
+        $id = Team::create([
             'denumire' => trim($body['denumire'] ?? ''),
             'descriere' => trim($body['descriere'] ?? ''),
         ]);
-        Response::ok(null, 'Echipa adaugata.');
+        RestHelper::created('/teams', $id, Team::find($id), [
+            'members' => '/teams/' . $id . '/members',
+            'results' => '/teams/' . $id . '/results',
+        ]);
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('teams');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Team::update((int) $params['id'], [
+        Team::update($id, [
             'denumire' => trim($body['denumire'] ?? ''),
             'descriere' => trim($body['descriere'] ?? ''),
         ]);
-        Response::ok(null, 'Echipa actualizata.');
+        RestHelper::updated('/teams/' . $id, Team::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('teams');
         Team::delete((int) $params['id']);
-        Response::ok(null, 'Echipa stearsa.');
+        RestHelper::deleted();
     }
 
     public function members(array $params): void
@@ -110,28 +115,33 @@ class TeamsApiController
         $id = (int) $params['id'];
         $team = Team::find($id);
         if (!$team) {
-            Response::error('Echipa negasita.', 404);
+            Response::problem('Echipa negasita.', 404);
         }
-        Response::ok([
-            'team' => $team,
-            'members' => Team::getMembers($id),
-            'available' => Team::getAvailableMembers($id),
+        Response::resource([
+            'team' => Hateoas::item($team, '/teams/' . $id),
+            'members' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Team::getMembers($id)),
+            'available' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Team::getAvailableMembers($id)),
+            '_links' => Hateoas::links(['self' => '/teams/' . $id . '/members']),
         ]);
     }
 
-    public function addMember(): void
+    public function addMember(array $params): void
     {
         AuthMiddleware::requireModule('teams');
+        $teamId = (int) $params['id'];
+        if (!Team::find($teamId)) {
+            Response::problem('Echipa negasita.', 404);
+        }
         $body = AuthMiddleware::getJsonBody();
-        Team::addMember((int) $body['team_id'], (int) $body['member_id']);
-        Response::ok(null, 'Membru adaugat in echipa.');
+        Team::addMember($teamId, (int) $body['member_id']);
+        Response::noContent();
     }
 
     public function removeMember(array $params): void
     {
         AuthMiddleware::requireModule('teams');
         Team::removeMember((int) $params['team_id'], (int) $params['member_id']);
-        Response::ok(null, 'Membru eliminat.');
+        Response::noContent();
     }
 
     public function results(array $params): void
@@ -140,34 +150,45 @@ class TeamsApiController
         $id = (int) $params['id'];
         $team = Team::find($id);
         if (!$team) {
-            Response::error('Echipa negasita.', 404);
+            Response::problem('Echipa negasita.', 404);
         }
-        Response::ok([
-            'team' => $team,
-            'results' => Team::getResults($id),
-            'competitions' => Competition::all(),
+        Response::resource([
+            'team' => Hateoas::item($team, '/teams/' . $id),
+            'results' => array_map(
+                fn($r) => Hateoas::item($r, '/teams/' . $id . '/results/' . $r['id']),
+                Team::getResults($id)
+            ),
+            'competitions' => Hateoas::collection(Competition::all(), '/competitions', '/competitions')['items'],
+            '_links' => Hateoas::links(['self' => '/teams/' . $id . '/results']),
         ]);
     }
 
-    public function addResult(): void
+    public function addResult(array $params): void
     {
         AuthMiddleware::requireModule('teams');
+        $teamId = (int) $params['id'];
+        if (!Team::find($teamId)) {
+            Response::problem('Echipa negasita.', 404);
+        }
         $body = AuthMiddleware::getJsonBody();
-        Team::addResult([
-            'team_id' => (int) $body['team_id'],
+        $resultId = Team::addResult([
+            'team_id' => $teamId,
             'competition_id' => (int) $body['competition_id'],
             'punctaj_total' => (float) ($body['punctaj_total'] ?? 0),
             'loc_obtinut' => isset($body['loc_obtinut']) && $body['loc_obtinut'] !== '' ? (int) $body['loc_obtinut'] : null,
             'observatii' => trim($body['observatii'] ?? ''),
         ]);
-        Response::ok(null, 'Rezultat echipa inregistrat.');
+        Response::created(
+            ['id' => $resultId, '_links' => Hateoas::links(['self' => '/teams/' . $teamId . '/results/' . $resultId])],
+            '/teams/' . $teamId . '/results/' . $resultId
+        );
     }
 
     public function deleteResult(array $params): void
     {
         AuthMiddleware::requireModule('teams');
         Team::deleteResult((int) $params['result_id']);
-        Response::ok(null, 'Rezultat sters.');
+        Response::noContent();
     }
 }
 
@@ -175,39 +196,47 @@ class GroupsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('groups');
-        Response::ok(Group::all());
+        RestHelper::index('groups', '/groups', Group::all(), ['coaches' => '/coaches']);
+    }
+
+    public function show(array $params): void
+    {
+        $id = (int) $params['id'];
+        RestHelper::show('groups', '/groups/' . $id, Group::find($id), [
+            'members' => '/groups/' . $id . '/members',
+        ]);
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('groups');
         $body = AuthMiddleware::getJsonBody();
-        Group::create([
+        $id = Group::create([
             'denumire' => trim($body['denumire'] ?? ''),
             'nivel' => trim($body['nivel'] ?? 'incepatori'),
             'coach_id' => !empty($body['coach_id']) ? (int) $body['coach_id'] : null,
         ]);
-        Response::ok(null, 'Grup adaugat.');
+        RestHelper::created('/groups', $id, Group::find($id), ['members' => '/groups/' . $id . '/members']);
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('groups');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Group::update((int) $params['id'], [
+        Group::update($id, [
             'denumire' => trim($body['denumire'] ?? ''),
             'nivel' => trim($body['nivel'] ?? 'incepatori'),
             'coach_id' => !empty($body['coach_id']) ? (int) $body['coach_id'] : null,
         ]);
-        Response::ok(null, 'Grup actualizat.');
+        RestHelper::updated('/groups/' . $id, Group::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('groups');
         Group::delete((int) $params['id']);
-        Response::ok(null, 'Grup sters.');
+        RestHelper::deleted();
     }
 
     public function members(array $params): void
@@ -216,34 +245,33 @@ class GroupsApiController
         $id = (int) $params['id'];
         $group = Group::find($id);
         if (!$group) {
-            Response::error('Grup negasit.', 404);
+            Response::problem('Grup negasit.', 404);
         }
-        Response::ok([
-            'group' => $group,
-            'members' => Group::getMembers($id),
-            'available' => Group::getAvailableMembers($id),
+        Response::resource([
+            'group' => Hateoas::item($group, '/groups/' . $id),
+            'members' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Group::getMembers($id)),
+            'available' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Group::getAvailableMembers($id)),
+            '_links' => Hateoas::links(['self' => '/groups/' . $id . '/members']),
         ]);
     }
 
-    public function addMember(): void
+    public function addMember(array $params): void
     {
         AuthMiddleware::requireModule('groups');
+        $groupId = (int) $params['id'];
+        if (!Group::find($groupId)) {
+            Response::problem('Grup negasit.', 404);
+        }
         $body = AuthMiddleware::getJsonBody();
-        Group::addMember((int) $body['group_id'], (int) $body['member_id']);
-        Response::ok(null, 'Membru adaugat in grup.');
+        Group::addMember($groupId, (int) $body['member_id']);
+        Response::noContent();
     }
 
     public function removeMember(array $params): void
     {
         AuthMiddleware::requireModule('groups');
         Group::removeMember((int) $params['group_id'], (int) $params['member_id']);
-        Response::ok(null, 'Membru eliminat.');
-    }
-
-    public function coaches(): void
-    {
-        AuthMiddleware::requireModule('groups');
-        Response::ok(Coach::getAntrenori());
+        Response::noContent();
     }
 }
 
@@ -251,39 +279,45 @@ class HallsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('halls');
-        Response::ok(Hall::all());
+        RestHelper::index('halls', '/halls', Hall::all());
+    }
+
+    public function show(array $params): void
+    {
+        $id = (int) $params['id'];
+        RestHelper::show('halls', '/halls/' . $id, Hall::find($id), ['slots' => '/halls/' . $id . '/slots']);
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('halls');
         $body = AuthMiddleware::getJsonBody();
-        Hall::create([
+        $id = Hall::create([
             'denumire' => trim($body['denumire'] ?? ''),
             'capacitate' => (int) ($body['capacitate'] ?? 0),
             'dotari' => trim($body['dotari'] ?? ''),
         ]);
-        Response::ok(null, 'Sala adaugata.');
+        RestHelper::created('/halls', $id, Hall::find($id), ['slots' => '/halls/' . $id . '/slots']);
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('halls');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Hall::update((int) $params['id'], [
+        Hall::update($id, [
             'denumire' => trim($body['denumire'] ?? ''),
             'capacitate' => (int) ($body['capacitate'] ?? 0),
             'dotari' => trim($body['dotari'] ?? ''),
         ]);
-        Response::ok(null, 'Sala actualizata.');
+        RestHelper::updated('/halls/' . $id, Hall::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('halls');
         Hall::delete((int) $params['id']);
-        Response::ok(null, 'Sala stearsa.');
+        RestHelper::deleted();
     }
 
     public function slots(array $params): void
@@ -292,31 +326,44 @@ class HallsApiController
         $id = (int) $params['id'];
         $hall = Hall::find($id);
         if (!$hall) {
-            Response::error('Sala negasita.', 404);
+            Response::problem('Sala negasita.', 404);
         }
-        Response::ok([
-            'hall' => $hall,
-            'slots' => HallSlot::byHall($id),
+        Response::resource([
+            'hall' => Hateoas::item($hall, '/halls/' . $id),
+            'slots' => array_map(
+                fn($s) => Hateoas::item($s, '/halls/' . $id . '/slots/' . $s['id']),
+                HallSlot::byHall($id)
+            ),
+            '_links' => Hateoas::links(['self' => '/halls/' . $id . '/slots']),
         ]);
     }
 
-    public function addSlot(): void
+    public function addSlot(array $params): void
     {
         AuthMiddleware::requireModule('halls');
+        $hallId = (int) $params['id'];
+        if (!Hall::find($hallId)) {
+            Response::problem('Sala negasita.', 404);
+        }
         $body = AuthMiddleware::getJsonBody();
-        HallSlot::create([
-            'hall_id' => (int) $body['hall_id'],
+        $slotId = HallSlot::create([
+            'hall_id' => $hallId,
             'zi_saptamana' => trim($body['zi_saptamana'] ?? ''),
             'ora_start' => trim($body['ora_start'] ?? ''),
             'ora_end' => trim($body['ora_end'] ?? ''),
         ]);
-        Response::ok(null, 'Interval adaugat.');
+        $slot = HallSlot::byHall($hallId);
+        $created = array_values(array_filter($slot, fn($s) => (int) $s['id'] === $slotId))[0] ?? ['id' => $slotId];
+        Response::created(
+            Hateoas::item($created, '/halls/' . $hallId . '/slots/' . $slotId),
+            '/halls/' . $hallId . '/slots/' . $slotId
+        );
     }
 
     public function deleteSlot(array $params): void
     {
         AuthMiddleware::requireModule('halls');
         HallSlot::delete((int) $params['slot_id']);
-        Response::ok(null, 'Interval sters.');
+        Response::noContent();
     }
 }

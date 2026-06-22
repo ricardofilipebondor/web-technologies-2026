@@ -35,7 +35,7 @@ class Member
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -43,6 +43,7 @@ class Member
             VALUES (:nume, :prenume, :data_nasterii, :email, :telefon, :categorie, :rating, :adresa, :coach_id)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

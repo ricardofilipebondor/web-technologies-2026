@@ -28,7 +28,7 @@ class Trip
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -36,6 +36,7 @@ class Trip
             VALUES (:destinatie, :data_plecare, :data_intoarcere, :scop, :team_id)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

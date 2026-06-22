@@ -20,11 +20,12 @@ class Team
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO teams (denumire, descriere) VALUES (:denumire, :descriere)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void
@@ -93,7 +94,7 @@ class Team
         return $stmt->fetchAll();
     }
 
-    public static function addResult(array $data): void
+    public static function addResult(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -101,6 +102,7 @@ class Team
             VALUES (:team_id, :competition_id, :punctaj_total, :loc_obtinut, :observatii)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function deleteResult(int $id): void

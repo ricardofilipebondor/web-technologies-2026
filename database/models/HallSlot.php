@@ -10,11 +10,12 @@ class HallSlot
         return $stmt->fetchAll();
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO hall_slots (hall_id, zi_saptamana, ora_start, ora_end) VALUES (:hall_id, :zi_saptamana, :ora_start, :ora_end)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function delete(int $id): void

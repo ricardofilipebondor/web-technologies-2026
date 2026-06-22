@@ -5,8 +5,7 @@ window.pages.coaches = {
     },
 
     async showList() {
-        const res = await api.get('/coaches');
-        const coaches = res.data;
+        const coaches = api.items(await api.get('/coaches'));
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Antrenori', 'Gestioneaza antrenorii si colaboratorii', `<a href="#/coaches/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
             ${renderTable(['Nume','Email','Rol','Actiuni'], coaches, c => `
@@ -33,8 +32,7 @@ window.pages.coaches = {
     async showForm(id) {
         let coach = { nume:'', email:'', telefon:'', specializare:'', disponibilitate:'', rol:'antrenor' };
         if (id) {
-            const res = await api.get('/coaches/' + id);
-            coach = res.data;
+            coach = await api.get('/coaches/' + id);
         }
         document.getElementById('page-content').innerHTML = `
             ${pageHeader(id ? 'Editare' : 'Antrenor nou', '', `<a href="#/coaches" class="btn btn-secondary btn-sm">Inapoi</a>`)}
@@ -70,10 +68,9 @@ window.pages.competitions = {
     },
 
     async showList() {
-        const res = await api.get('/competitions');
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Concursuri', 'Gestioneaza competitii', `<a href="#/competitions/form" class="btn btn-primary btn-sm">+ Adauga</a>`)}
-            ${renderTable(['Nume','Data','Locatie','Tip','Domeniu','Actiuni'], res.data, c => `
+            ${renderTable(['Nume','Data','Locatie','Tip','Domeniu','Actiuni'], api.items(await api.get('/competitions')), c => `
                 <tr>
                     <td><strong>${escapeHtml(c.nume)}</strong></td>
                     <td>${escapeHtml(c.data)}</td>
@@ -98,8 +95,7 @@ window.pages.competitions = {
     async showForm(id) {
         let c = { nume:'', data:'', locatie:'', tip:'fizic', domeniu:'local' };
         if (id) {
-            const all = await api.get('/competitions');
-            c = all.data.find(x => String(x.id) === String(id)) || c;
+            c = await api.get('/competitions/' + id);
         }
         document.getElementById('page-content').innerHTML = `
             ${pageHeader('Concurs', '', `<a href="#/competitions" class="btn btn-secondary btn-sm">Inapoi</a>`)}

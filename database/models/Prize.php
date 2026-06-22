@@ -24,7 +24,7 @@ class Prize
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('
@@ -32,6 +32,7 @@ class Prize
             VALUES (:titlu, :descriere, :member_id, :competition_id, :data_acordare)
         ');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

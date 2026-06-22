@@ -1,6 +1,8 @@
 <?php
 
 define('APP_NAME', 'eSC - Chess Club Manager');
+define('JWT_SECRET', 'esc-jwt-secret-change-in-production-2026');
+define('JWT_TTL', 86400);
 
 $ROLE_PERMISSIONS = [
     'administrator' => [
@@ -21,9 +23,10 @@ function userCanAccess(string $module): bool
 {
     global $ROLE_PERMISSIONS;
 
-    if (!isset($_SESSION['role'])) {
+    $role = AuthMiddleware::role();
+    if ($role === null) {
         return false;
     }
 
-    return in_array($module, $ROLE_PERMISSIONS[$_SESSION['role']] ?? [], true);
+    return in_array($module, $ROLE_PERMISSIONS[$role] ?? [], true);
 }

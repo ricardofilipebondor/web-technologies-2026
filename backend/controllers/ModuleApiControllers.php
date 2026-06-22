@@ -4,17 +4,15 @@ class ActivitiesApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('activities');
-        Response::ok(Activity::all());
+        RestHelper::index('activities', '/activities', Activity::all(), [
+            'halls' => '/halls',
+            'coaches' => '/coaches',
+        ]);
     }
 
-    public function meta(): void
+    public function show(array $params): void
     {
-        AuthMiddleware::requireModule('activities');
-        Response::ok([
-            'halls' => Hall::all(),
-            'coaches' => Coach::getAntrenori(),
-        ]);
+        RestHelper::show('activities', '/activities/' . $params['id'], Activity::find((int) $params['id']));
     }
 
     public function store(): void
@@ -23,10 +21,10 @@ class ActivitiesApiController
         $data = $this->formData();
         $error = $this->validateSchedule($data);
         if ($error) {
-            Response::error($error);
+            Response::problem($error);
         }
-        Activity::create($data);
-        Response::ok(null, 'Activitate adaugata.');
+        $id = Activity::create($data);
+        RestHelper::created('/activities', $id, Activity::find($id));
     }
 
     public function update(array $params): void
@@ -36,17 +34,17 @@ class ActivitiesApiController
         $data = $this->formData();
         $error = $this->validateSchedule($data, $id);
         if ($error) {
-            Response::error($error);
+            Response::problem($error);
         }
         Activity::update($id, $data);
-        Response::ok(null, 'Activitate actualizata.');
+        RestHelper::updated('/activities/' . $id, Activity::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('activities');
         Activity::delete((int) $params['id']);
-        Response::ok(null, 'Activitate stearsa.');
+        RestHelper::deleted();
     }
 
     private function formData(): array
@@ -90,50 +88,83 @@ class CompetitionsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('competitions');
-        Response::ok(Competition::all());
+        RestHelper::index('competitions', '/competitions', Competition::all());
+    }
+
+    public function show(array $params): void
+    {
+        $id = (int) $params['id'];
+        RestHelper::show('competitions', '/competitions/' . $id, Competition::find($id), [
+            'report' => '/competitions/' . $id . '/report',
+            'prizes' => '/competitions/' . $id . '/prizes',
+        ]);
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('competitions');
         $body = AuthMiddleware::getJsonBody();
-        Competition::create([
+        $id = Competition::create([
             'nume' => trim($body['nume'] ?? ''),
             'data' => trim($body['data'] ?? ''),
             'locatie' => trim($body['locatie'] ?? ''),
             'tip' => trim($body['tip'] ?? 'fizic'),
             'domeniu' => trim($body['domeniu'] ?? 'local'),
         ]);
-        Response::ok(null, 'Concurs adaugat.');
+        RestHelper::created('/competitions', $id, Competition::find($id));
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('competitions');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Competition::update((int) $params['id'], [
+        Competition::update($id, [
             'nume' => trim($body['nume'] ?? ''),
             'data' => trim($body['data'] ?? ''),
             'locatie' => trim($body['locatie'] ?? ''),
             'tip' => trim($body['tip'] ?? 'fizic'),
             'domeniu' => trim($body['domeniu'] ?? 'local'),
         ]);
-        Response::ok(null, 'Concurs actualizat.');
+        RestHelper::updated('/competitions/' . $id, Competition::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('competitions');
         Competition::delete((int) $params['id']);
-        Response::ok(null, 'Concurs sters.');
+        RestHelper::deleted();
     }
 
     public function report(array $params): void
     {
         AuthMiddleware::requireModule('competitions');
-        $report = (new CompetitionsService())->participationsReport((int) $params['id']);
-        Response::ok($report);
+        $id = (int) $params['id'];
+        if (!Competition::find($id)) {
+            Response::problem('Concurs negasit.', 404);
+        }
+        $report = (new CompetitionsService())->participationsReport($id);
+        Response::resource(array_merge($report, [
+            '_links' => Hateoas::links(['self' => '/competitions/' . $id . '/report']),
+        ]));
+    }
+
+    public function prizes(array $params): void
+    {
+        AuthMiddleware::requireModule('prizes');
+        $compId = (int) $params['id'];
+        $competition = Competition::find($compId);
+        if (!$competition) {
+            Response::problem('Concurs negasit.', 404);
+        }
+        Response::resource([
+            'competition' => Hateoas::item($competition, '/competitions/' . $compId),
+            'items' => array_map(
+                fn($p) => Hateoas::item($p, '/prizes/' . $p['id']),
+                Prize::byCompetition($compId)
+            ),
+            '_links' => Hateoas::links(['self' => '/competitions/' . $compId . '/prizes']),
+        ]);
     }
 }
 
@@ -142,16 +173,27 @@ class ParticipationsApiController
     public function index(): void
     {
         AuthMiddleware::requireModule('participations');
-        Response::ok(Participation::all());
+
+        if (isset($_GET['report'])) {
+            $this->report();
+            return;
+        }
+
+        $format = $_GET['format'] ?? '';
+        if ($format !== '' && isset($_GET['competition_id'])) {
+            $this->exportReport();
+            return;
+        }
+
+        RestHelper::index('participations', '/participations', Participation::all(), [
+            'members' => '/members',
+            'competitions' => '/competitions',
+        ]);
     }
 
-    public function meta(): void
+    public function show(array $params): void
     {
-        AuthMiddleware::requireModule('participations');
-        Response::ok([
-            'members' => Member::getForSelect(),
-            'competitions' => Competition::all(),
-        ]);
+        RestHelper::show('participations', '/participations/' . $params['id'], Participation::find((int) $params['id']));
     }
 
     public function store(): void
@@ -159,52 +201,52 @@ class ParticipationsApiController
         AuthMiddleware::requireModule('participations');
         $body = AuthMiddleware::getJsonBody();
         try {
-            Participation::create([
+            $id = Participation::create([
                 'member_id' => (int) ($body['member_id'] ?? 0),
                 'competition_id' => (int) ($body['competition_id'] ?? 0),
                 'punctaj' => (float) ($body['punctaj'] ?? 0),
                 'loc_obtinut' => isset($body['loc_obtinut']) && $body['loc_obtinut'] !== '' ? (int) $body['loc_obtinut'] : null,
             ]);
-            Response::ok(null, 'Participare inregistrata.');
+            RestHelper::created('/participations', $id, Participation::find($id));
         } catch (PDOException $e) {
-            Response::error('Membrul este deja inscris la acest concurs.');
+            Response::problem('Membrul este deja inscris la acest concurs.', 409);
         }
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('participations');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Participation::update((int) $params['id'], [
+        Participation::update($id, [
             'member_id' => (int) ($body['member_id'] ?? 0),
             'competition_id' => (int) ($body['competition_id'] ?? 0),
             'punctaj' => (float) ($body['punctaj'] ?? 0),
             'loc_obtinut' => isset($body['loc_obtinut']) && $body['loc_obtinut'] !== '' ? (int) $body['loc_obtinut'] : null,
         ]);
-        Response::ok(null, 'Rezultat actualizat.');
+        RestHelper::updated('/participations/' . $id, Participation::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('participations');
         Participation::delete((int) $params['id']);
-        Response::ok(null, 'Participare stearsa.');
+        RestHelper::deleted();
     }
 
-    public function report(): void
+    private function report(): void
     {
-        AuthMiddleware::requireModule('participations');
         $competitionId = (int) ($_GET['competition_id'] ?? 0);
         $report = (new CompetitionsService())->participationsReport($competitionId);
-        Response::ok(array_merge($report, [
-            'competitions' => Competition::all(),
+        Response::resource(array_merge($report, [
+            'competitions' => Hateoas::collection(Competition::all(), '/competitions', '/competitions')['items'],
             'competitionId' => $competitionId,
+            '_links' => Hateoas::links(['self' => '/participations?report=1']),
         ]));
     }
 
-    public function exportReport(): void
+    private function exportReport(): void
     {
-        AuthMiddleware::requireModule('participations');
         $competitionId = (int) ($_GET['competition_id'] ?? 0);
         $format = $_GET['format'] ?? 'csv';
         $participations = Participation::byCompetition($competitionId);
@@ -229,7 +271,7 @@ class ParticipationsApiController
         } elseif ($format === 'xml') {
             DataExporter::toXml($data, 'raport', 'participare', $filename . '.xml');
         }
-        Response::error('Format invalid.');
+        Response::problem('Format invalid.');
     }
 }
 
@@ -238,6 +280,13 @@ class RankingsApiController
     public function index(): void
     {
         AuthMiddleware::requireModule('rankings');
+
+        $format = $_GET['format'] ?? '';
+        if ($format !== '') {
+            $this->export();
+            return;
+        }
+
         $competitionId = (int) ($_GET['competition_id'] ?? 0);
         $ranking = [];
         $competition = null;
@@ -247,17 +296,17 @@ class RankingsApiController
             $ranking = Participation::getRanking($competitionId);
         }
 
-        Response::ok([
-            'competitions' => Competition::all(),
+        Response::resource([
+            'competitions' => Hateoas::collection(Competition::all(), '/competitions', '/competitions')['items'],
             'competitionId' => $competitionId,
-            'competition' => $competition,
+            'competition' => $competition ? Hateoas::item($competition, '/competitions/' . $competitionId) : null,
             'ranking' => $ranking,
+            '_links' => Hateoas::links(['self' => '/rankings']),
         ]);
     }
 
-    public function export(): void
+    private function export(): void
     {
-        AuthMiddleware::requireModule('rankings');
         $competitionId = (int) ($_GET['competition_id'] ?? 0);
         $format = $_GET['format'] ?? 'csv';
         $ranking = Participation::getRanking($competitionId);
@@ -283,7 +332,7 @@ class RankingsApiController
         } elseif ($format === 'xml') {
             DataExporter::toXml($data, 'clasament', 'participant', $filename . '.xml');
         }
-        Response::error('Format invalid.');
+        Response::problem('Format invalid.');
     }
 }
 
@@ -291,80 +340,51 @@ class PrizesApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('prizes');
-        Response::ok(Prize::all());
+        RestHelper::index('prizes', '/prizes', Prize::all(), [
+            'members' => '/members',
+            'competitions' => '/competitions',
+        ]);
     }
 
-    public function meta(): void
+    public function show(array $params): void
     {
-        AuthMiddleware::requireModule('prizes');
-        Response::ok([
-            'members' => Member::getForSelect(),
-            'competitions' => Competition::all(),
-        ]);
+        RestHelper::show('prizes', '/prizes/' . $params['id'], Prize::find((int) $params['id']));
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('prizes');
         $body = AuthMiddleware::getJsonBody();
-        Prize::create([
+        $id = Prize::create([
             'titlu' => trim($body['titlu'] ?? ''),
             'descriere' => trim($body['descriere'] ?? ''),
             'member_id' => (int) ($body['member_id'] ?? 0),
             'competition_id' => isset($body['competition_id']) && $body['competition_id'] !== '' ? (int) $body['competition_id'] : null,
             'data_acordare' => trim($body['data_acordare'] ?? ''),
         ]);
-        Response::ok(null, 'Premiu adaugat.');
+        RestHelper::created('/prizes', $id, Prize::find($id));
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('prizes');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Prize::update((int) $params['id'], [
+        Prize::update($id, [
             'titlu' => trim($body['titlu'] ?? ''),
             'descriere' => trim($body['descriere'] ?? ''),
             'member_id' => (int) ($body['member_id'] ?? 0),
             'competition_id' => isset($body['competition_id']) && $body['competition_id'] !== '' ? (int) $body['competition_id'] : null,
             'data_acordare' => trim($body['data_acordare'] ?? ''),
         ]);
-        Response::ok(null, 'Premiu actualizat.');
+        RestHelper::updated('/prizes/' . $id, Prize::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('prizes');
         Prize::delete((int) $params['id']);
-        Response::ok(null, 'Premiu sters.');
-    }
-
-    public function byMember(array $params): void
-    {
-        AuthMiddleware::requireModule('prizes');
-        $memberId = (int) $params['member_id'];
-        $member = Member::find($memberId);
-        if (!$member) {
-            Response::error('Membru negasit.', 404);
-        }
-        Response::ok([
-            'member' => $member,
-            'prizes' => Prize::byMember($memberId),
-        ]);
-    }
-
-    public function byCompetition(array $params): void
-    {
-        AuthMiddleware::requireModule('prizes');
-        $compId = (int) $params['competition_id'];
-        $competition = Competition::find($compId);
-        if (!$competition) {
-            Response::error('Concurs negasit.', 404);
-        }
-        Response::ok([
-            'competition' => $competition,
-            'prizes' => Prize::byCompetition($compId),
-        ]);
+        RestHelper::deleted();
     }
 }
 
@@ -372,49 +392,53 @@ class TripsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('trips');
-        Response::ok(Trip::all());
+        RestHelper::index('trips', '/trips', Trip::all(), ['teams' => '/teams']);
     }
 
-    public function meta(): void
+    public function show(array $params): void
     {
-        AuthMiddleware::requireModule('trips');
-        Response::ok(['teams' => Team::getForSelect()]);
+        $id = (int) $params['id'];
+        RestHelper::show('trips', '/trips/' . $id, Trip::find($id), [
+            'members' => '/trips/' . $id . '/members',
+            'report' => '/trips/' . $id . '/report',
+            'expenses' => '/expenses?trip_id=' . $id,
+        ]);
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('trips');
         $body = AuthMiddleware::getJsonBody();
-        Trip::create([
+        $id = Trip::create([
             'destinatie' => trim($body['destinatie'] ?? ''),
             'data_plecare' => trim($body['data_plecare'] ?? ''),
             'data_intoarcere' => trim($body['data_intoarcere'] ?? ''),
             'scop' => trim($body['scop'] ?? ''),
             'team_id' => isset($body['team_id']) && $body['team_id'] !== '' ? (int) $body['team_id'] : null,
         ]);
-        Response::ok(null, 'Deplasare adaugata.');
+        RestHelper::created('/trips', $id, Trip::find($id), ['members' => '/trips/' . $id . '/members']);
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('trips');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Trip::update((int) $params['id'], [
+        Trip::update($id, [
             'destinatie' => trim($body['destinatie'] ?? ''),
             'data_plecare' => trim($body['data_plecare'] ?? ''),
             'data_intoarcere' => trim($body['data_intoarcere'] ?? ''),
             'scop' => trim($body['scop'] ?? ''),
             'team_id' => isset($body['team_id']) && $body['team_id'] !== '' ? (int) $body['team_id'] : null,
         ]);
-        Response::ok(null, 'Deplasare actualizata.');
+        RestHelper::updated('/trips/' . $id, Trip::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('trips');
         Trip::delete((int) $params['id']);
-        Response::ok(null, 'Deplasare stearsa.');
+        RestHelper::deleted();
     }
 
     public function members(array $params): void
@@ -423,28 +447,33 @@ class TripsApiController
         $id = (int) $params['id'];
         $trip = Trip::find($id);
         if (!$trip) {
-            Response::error('Deplasare negasita.', 404);
+            Response::problem('Deplasare negasita.', 404);
         }
-        Response::ok([
-            'trip' => $trip,
-            'members' => Trip::getMembers($id),
-            'available' => Trip::getAvailableMembers($id),
+        Response::resource([
+            'trip' => Hateoas::item($trip, '/trips/' . $id),
+            'members' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Trip::getMembers($id)),
+            'available' => array_map(fn($m) => Hateoas::item($m, '/members/' . $m['id']), Trip::getAvailableMembers($id)),
+            '_links' => Hateoas::links(['self' => '/trips/' . $id . '/members']),
         ]);
     }
 
-    public function addMember(): void
+    public function addMember(array $params): void
     {
         AuthMiddleware::requireModule('trips');
+        $tripId = (int) $params['id'];
+        if (!Trip::find($tripId)) {
+            Response::problem('Deplasare negasita.', 404);
+        }
         $body = AuthMiddleware::getJsonBody();
-        Trip::addMember((int) $body['trip_id'], (int) $body['member_id']);
-        Response::ok(null, 'Membru adaugat la deplasare.');
+        Trip::addMember($tripId, (int) $body['member_id']);
+        Response::noContent();
     }
 
     public function removeMember(array $params): void
     {
         AuthMiddleware::requireModule('trips');
         Trip::removeMember((int) $params['trip_id'], (int) $params['member_id']);
-        Response::ok(null, 'Membru eliminat.');
+        Response::noContent();
     }
 
     public function report(array $params): void
@@ -452,9 +481,10 @@ class TripsApiController
         AuthMiddleware::requireModule('trips');
         $report = (new TripsService())->report((int) $params['id']);
         if (!$report) {
-            Response::error('Deplasare negasita.', 404);
+            Response::problem('Deplasare negasita.', 404);
         }
-        Response::ok($report);
+        $report['_links'] = Hateoas::links(['self' => '/trips/' . $params['id'] . '/report']);
+        Response::resource($report);
     }
 }
 
@@ -464,49 +494,47 @@ class ExpensesApiController
     {
         AuthMiddleware::requireModule('expenses');
         $tripId = (int) ($_GET['trip_id'] ?? 0);
-        if ($tripId > 0) {
-            Response::ok(Expense::byTrip($tripId));
-        }
-        Response::ok(Expense::all());
+        $items = $tripId > 0 ? Expense::byTrip($tripId) : Expense::all();
+        RestHelper::index('expenses', '/expenses', $items, ['trips' => '/trips']);
     }
 
-    public function meta(): void
+    public function show(array $params): void
     {
-        AuthMiddleware::requireModule('expenses');
-        Response::ok(['trips' => Trip::all()]);
+        RestHelper::show('expenses', '/expenses/' . $params['id'], Expense::find((int) $params['id']));
     }
 
     public function store(): void
     {
         AuthMiddleware::requireModule('expenses');
         $body = AuthMiddleware::getJsonBody();
-        Expense::create([
+        $id = Expense::create([
             'trip_id' => (int) ($body['trip_id'] ?? 0),
             'tip' => trim($body['tip'] ?? ''),
             'suma' => (float) ($body['suma'] ?? 0),
             'observatii' => trim($body['observatii'] ?? ''),
         ]);
-        Response::ok(null, 'Cheltuiala adaugata.');
+        RestHelper::created('/expenses', $id, Expense::find($id));
     }
 
     public function update(array $params): void
     {
         AuthMiddleware::requireModule('expenses');
+        $id = (int) $params['id'];
         $body = AuthMiddleware::getJsonBody();
-        Expense::update((int) $params['id'], [
+        Expense::update($id, [
             'trip_id' => (int) ($body['trip_id'] ?? 0),
             'tip' => trim($body['tip'] ?? ''),
             'suma' => (float) ($body['suma'] ?? 0),
             'observatii' => trim($body['observatii'] ?? ''),
         ]);
-        Response::ok(null, 'Cheltuiala actualizata.');
+        RestHelper::updated('/expenses/' . $id, Expense::find($id));
     }
 
     public function delete(array $params): void
     {
         AuthMiddleware::requireModule('expenses');
         Expense::delete((int) $params['id']);
-        Response::ok(null, 'Cheltuiala stearsa.');
+        RestHelper::deleted();
     }
 }
 
@@ -514,8 +542,7 @@ class ReimbursementsApiController
 {
     public function index(): void
     {
-        AuthMiddleware::requireModule('reimbursements');
-        Response::ok(Trip::all());
+        RestHelper::index('reimbursements', '/reimbursements', Trip::all());
     }
 
     public function show(array $params): void
@@ -523,9 +550,13 @@ class ReimbursementsApiController
         AuthMiddleware::requireModule('reimbursements');
         $report = (new TripsService())->report((int) $params['id']);
         if (!$report) {
-            Response::error('Deplasare negasita.', 404);
+            Response::problem('Deplasare negasita.', 404);
         }
-        Response::ok($report);
+        $report['_links'] = Hateoas::links([
+            'self' => '/reimbursements/' . $params['id'],
+            'export' => '/reimbursements/' . $params['id'] . '/export',
+        ]);
+        Response::resource($report);
     }
 
     public function export(array $params): void
@@ -535,7 +566,7 @@ class ReimbursementsApiController
         $format = $_GET['format'] ?? 'csv';
         $trip = Trip::find($tripId);
         if (!$trip) {
-            Response::error('Deplasare negasita.', 404);
+            Response::problem('Deplasare negasita.', 404);
         }
         $expenses = Expense::byTrip($tripId);
         $total = Trip::getTotalExpenses($tripId);

@@ -17,11 +17,12 @@ class Hall
         return $row ?: null;
     }
 
-    public static function create(array $data): void
+    public static function create(array $data): int
     {
         $db = getDatabaseConnection();
         $stmt = $db->prepare('INSERT INTO halls (denumire, capacitate, dotari) VALUES (:denumire, :capacitate, :dotari)');
         $stmt->execute($data);
+        return (int) $db->lastInsertId();
     }
 
     public static function update(int $id, array $data): void

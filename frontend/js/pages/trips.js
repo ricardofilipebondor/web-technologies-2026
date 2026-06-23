@@ -24,8 +24,10 @@ window.pages.trips = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/trips/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/trips/' + btn.dataset.delete),
+                    { success: 'Deplasare stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -47,9 +49,13 @@ window.pages.trips = {
         document.getElementById('tripForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/trips/' + id, body);
-            else await api.post('/trips', body);
-            location.hash = '#/trips';
+            await runAction(async () => {
+                if (id) await api.put('/trips/' + id, body);
+                else await api.post('/trips', body);
+            }, {
+                success: 'Deplasare salvata.',
+                onSuccess: () => { location.hash = '#/trips'; },
+            });
         });
     },
 
@@ -67,13 +73,17 @@ window.pages.trips = {
         `;
         document.getElementById('addForm').addEventListener('submit', async e => {
             e.preventDefault();
-            await api.post('/trips/' + id + '/members', { member_id: new FormData(e.target).get('member_id') });
-            this.showMembers(id);
+            await runAction(
+                () => api.post('/trips/' + id + '/members', { member_id: new FormData(e.target).get('member_id') }),
+                { success: 'Membru adaugat.', onSuccess: () => this.showMembers(id) }
+            );
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/trips/' + id + '/members/' + btn.dataset.remove);
-                this.showMembers(id);
+                await runAction(
+                    () => api.delete('/trips/' + id + '/members/' + btn.dataset.remove),
+                    { success: 'Membru eliminat.', onSuccess: () => this.showMembers(id) }
+                );
             });
         });
     }
@@ -103,8 +113,10 @@ window.pages.expenses = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/expenses/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/expenses/' + btn.dataset.delete),
+                    { success: 'Cheltuiala stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -126,9 +138,13 @@ window.pages.expenses = {
             ev.preventDefault();
             const body = Object.fromEntries(new FormData(ev.target).entries());
             body.suma = parseFloat(body.suma) || 0;
-            if (id) await api.put('/expenses/' + id, body);
-            else await api.post('/expenses', body);
-            location.hash = '#/expenses';
+            await runAction(async () => {
+                if (id) await api.put('/expenses/' + id, body);
+                else await api.post('/expenses', body);
+            }, {
+                success: 'Cheltuiala salvata.',
+                onSuccess: () => { location.hash = '#/expenses'; },
+            });
         });
     }
 };

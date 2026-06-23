@@ -22,9 +22,10 @@ window.pages.coaches = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/coaches/' + btn.dataset.delete);
-                showAlert('Sters.', 'success');
-                this.showList();
+                await runAction(
+                    () => api.delete('/coaches/' + btn.dataset.delete),
+                    { success: 'Antrenor sters.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -53,10 +54,13 @@ window.pages.coaches = {
         document.getElementById('coachForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/coaches/' + id, body);
-            else await api.post('/coaches', body);
-            showAlert('Salvat.', 'success');
-            location.hash = '#/coaches';
+            await runAction(async () => {
+                if (id) await api.put('/coaches/' + id, body);
+                else await api.post('/coaches', body);
+            }, {
+                success: 'Antrenor salvat.',
+                onSuccess: () => { location.hash = '#/coaches'; },
+            });
         });
     }
 };
@@ -86,8 +90,10 @@ window.pages.competitions = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/competitions/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/competitions/' + btn.dataset.delete),
+                    { success: 'Concurs sters.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -118,9 +124,13 @@ window.pages.competitions = {
         document.getElementById('compForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/competitions/' + id, body);
-            else await api.post('/competitions', body);
-            location.hash = '#/competitions';
+            await runAction(async () => {
+                if (id) await api.put('/competitions/' + id, body);
+                else await api.post('/competitions', body);
+            }, {
+                success: 'Concurs salvat.',
+                onSuccess: () => { location.hash = '#/competitions'; },
+            });
         });
     }
 };

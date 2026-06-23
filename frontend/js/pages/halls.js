@@ -22,8 +22,10 @@ window.pages.halls = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/halls/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/halls/' + btn.dataset.delete),
+                    { success: 'Sala stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -43,9 +45,13 @@ window.pages.halls = {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
             body.capacitate = parseInt(body.capacitate) || 0;
-            if (id) await api.put('/halls/' + id, body);
-            else await api.post('/halls', body);
-            location.hash = '#/halls';
+            await runAction(async () => {
+                if (id) await api.put('/halls/' + id, body);
+                else await api.post('/halls', body);
+            }, {
+                success: 'Sala salvata.',
+                onSuccess: () => { location.hash = '#/halls'; },
+            });
         });
     },
 
@@ -68,13 +74,17 @@ window.pages.halls = {
         document.getElementById('slotForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            await api.post('/halls/' + id + '/slots', body);
-            this.showSlots(id);
+            await runAction(
+                () => api.post('/halls/' + id + '/slots', body),
+                { success: 'Interval adaugat.', onSuccess: () => this.showSlots(id) }
+            );
         });
         document.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/halls/' + id + '/slots/' + btn.dataset.del);
-                this.showSlots(id);
+                await runAction(
+                    () => api.delete('/halls/' + id + '/slots/' + btn.dataset.del),
+                    { success: 'Interval sters.', onSuccess: () => this.showSlots(id) }
+                );
             });
         });
     }
@@ -105,8 +115,10 @@ window.pages.activities = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/activities/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/activities/' + btn.dataset.delete),
+                    { success: 'Activitate stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -132,9 +144,13 @@ window.pages.activities = {
         document.getElementById('actForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/activities/' + id, body);
-            else await api.post('/activities', body);
-            location.hash = '#/activities';
+            await runAction(async () => {
+                if (id) await api.put('/activities/' + id, body);
+                else await api.post('/activities', body);
+            }, {
+                success: 'Activitate salvata.',
+                onSuccess: () => { location.hash = '#/activities'; },
+            });
         });
     }
 };

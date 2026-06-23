@@ -23,6 +23,7 @@ async function navigate() {
         await page.render(parts.slice(1));
     } catch (err) {
         container.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message)}</div>`;
+        showAlert(err.message || 'Eroare la incarcarea paginii.', 'danger');
     }
 }
 

@@ -6,7 +6,7 @@ class Prize
     {
         $db = getDatabaseConnection();
         $sql = 'SELECT prizes.*,
-                members.nume AS member_nume, members.prenume AS member_prenume,
+                members.nume AS nume, members.prenume AS prenume,
                 competitions.nume AS competition_nume
                 FROM prizes
                 JOIN members ON prizes.member_id = members.id

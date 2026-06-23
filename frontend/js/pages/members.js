@@ -53,9 +53,10 @@ window.pages.members = {
         container.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti membru?')) return;
-                await api.delete('/members/' + btn.dataset.delete);
-                showAlert('Membru sters.', 'success');
-                this.showList();
+                await runAction(
+                    () => api.delete('/members/' + btn.dataset.delete),
+                    { success: 'Membru sters.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -69,21 +70,21 @@ window.pages.members = {
             ${pageHeader(member.nume + ' ' + member.prenume, 'Profil membru', `<a href="#/members" class="btn btn-secondary btn-sm">Inapoi</a>`)}
             <div class="grid-2">
                 <div class="card"><div class="card-header">Date personale</div>
-                    <p>Email: ${escapeHtml(member.email)}</p>
-                    <p>Telefon: ${escapeHtml(member.telefon)}</p>
-                    <p>Categorie: ${escapeHtml(member.categorie)}</p>
-                    <p>Rating: ${escapeHtml(String(member.rating))}</p>
-                    <p>Antrenor: ${escapeHtml(member.coach_nume || '—')}</p>
+                    <p class="padding-left-20">Email: ${escapeHtml(member.email)}</p>
+                    <p class="padding-left-20">Telefon: ${escapeHtml(member.telefon)}</p>
+                    <p class="padding-left-20">Categorie: ${escapeHtml(member.categorie)}</p>
+                    <p class="padding-left-20">Rating: ${escapeHtml(String(member.rating))}</p>
+                    <p class="padding-left-20">Antrenor: ${escapeHtml(member.coach_nume || '—')}</p>
                 </div>
-                <div class="card"><div class="card-header">Grupuri</div>
-                    ${groups.length ? groups.map(g => `<div class="list-item"><div class="list-item-title">${escapeHtml(g.denumire)}</div></div>`).join('') : '<p>Fara grupuri.</p>'}
+                <div class="card"><div class="card-header ">Grupuri</div>
+                    ${groups.length ? groups.map(g => `<div class="list-item"><div class="list-item-title">${escapeHtml(g.denumire)}</div></div>`).join('') : '<p class="padding-left-20">Fara grupuri.</p>'}
                 </div>
             </div>
             <div class="card" style="margin-top:1rem"><div class="card-header">Participari</div>
                 ${participations.length ? participations.map(p => `<div class="list-item"><div class="list-item-title">${escapeHtml(p.competition_nume)}</div><div class="list-item-meta">Punctaj: ${p.punctaj}</div></div>`).join('') : '<p>Fara participari.</p>'}
             </div>
             <div class="card" style="margin-top:1rem"><div class="card-header">Premii</div>
-                ${prizes.length ? prizes.map(p => `<div class="list-item"><div class="list-item-title">${escapeHtml(p.titlu)}</div></div>`).join('') : '<p>Fara premii.</p>'}
+                ${prizes.length ? prizes.map(p => `<div class="list-item"><div class="list-item-title">${escapeHtml(p.titlu)}</div></div>`).join('') : '<p class="padding-left-20">Fara premii.</p>'}
             </div>`;
     },
 
@@ -119,10 +120,13 @@ window.pages.members = {
             const fd = new FormData(e.target);
             const body = Object.fromEntries(fd.entries());
             body.rating = parseInt(body.rating) || 0;
-            if (id) await api.put('/members/' + id, body);
-            else await api.post('/members', body);
-            showAlert('Salvat cu succes.', 'success');
-            location.hash = '#/members';
+            await runAction(async () => {
+                if (id) await api.put('/members/' + id, body);
+                else await api.post('/members', body);
+            }, {
+                success: 'Salvat cu succes.',
+                onSuccess: () => { location.hash = '#/members'; },
+            });
         });
     },
 
@@ -144,13 +148,15 @@ window.pages.members = {
         document.getElementById('importForm').addEventListener('submit', async e => {
             e.preventDefault();
             const fd = new FormData(e.target);
-            try {
-                const res = await api.upload('/members/imports/file', fd);
-                document.getElementById('importResult').textContent = 'Import reusit (' + res.imported + ' membri)';
-                showAlert('Import reusit.', 'success');
-            } catch (err) {
-                document.getElementById('importResult').textContent = err.message;
-            }
+            await runAction(
+                () => api.upload('/members/imports/file', fd),
+                {
+                    success: 'Import reusit.',
+                    onSuccess: (res) => {
+                        document.getElementById('importResult').textContent = 'Import reusit (' + res.imported + ' membri)';
+                    },
+                }
+            );
         });
     }
 };

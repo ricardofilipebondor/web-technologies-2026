@@ -24,8 +24,10 @@ window.pages.teams = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/teams/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/teams/' + btn.dataset.delete),
+                    { success: 'Echipa stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -46,9 +48,13 @@ window.pages.teams = {
         document.getElementById('teamForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/teams/' + id, body);
-            else await api.post('/teams', body);
-            location.hash = '#/teams';
+            await runAction(async () => {
+                if (id) await api.put('/teams/' + id, body);
+                else await api.post('/teams', body);
+            }, {
+                success: 'Echipa salvata.',
+                onSuccess: () => { location.hash = '#/teams'; },
+            });
         });
     },
 
@@ -68,13 +74,17 @@ window.pages.teams = {
         document.getElementById('addMemberForm').addEventListener('submit', async e => {
             e.preventDefault();
             const member_id = new FormData(e.target).get('member_id');
-            await api.post('/teams/' + id + '/members', { member_id });
-            this.showMembers(id);
+            await runAction(
+                () => api.post('/teams/' + id + '/members', { member_id }),
+                { success: 'Membru adaugat.', onSuccess: () => this.showMembers(id) }
+            );
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/teams/' + id + '/members/' + btn.dataset.remove);
-                this.showMembers(id);
+                await runAction(
+                    () => api.delete('/teams/' + id + '/members/' + btn.dataset.remove),
+                    { success: 'Membru eliminat.', onSuccess: () => this.showMembers(id) }
+                );
             });
         });
     },
@@ -98,13 +108,17 @@ window.pages.teams = {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
             body.punctaj_total = parseFloat(body.punctaj_total) || 0;
-            await api.post('/teams/' + id + '/results', body);
-            this.showResults(id);
+            await runAction(
+                () => api.post('/teams/' + id + '/results', body),
+                { success: 'Rezultat adaugat.', onSuccess: () => this.showResults(id) }
+            );
         });
         document.querySelectorAll('[data-del]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/teams/' + id + '/results/' + btn.dataset.del);
-                this.showResults(id);
+                await runAction(
+                    () => api.delete('/teams/' + id + '/results/' + btn.dataset.del),
+                    { success: 'Rezultat sters.', onSuccess: () => this.showResults(id) }
+                );
             });
         });
     }
@@ -135,8 +149,10 @@ window.pages.groups = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/groups/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/groups/' + btn.dataset.delete),
+                    { success: 'Grup sters.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -160,9 +176,13 @@ window.pages.groups = {
         document.getElementById('groupForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/groups/' + id, body);
-            else await api.post('/groups', body);
-            location.hash = '#/groups';
+            await runAction(async () => {
+                if (id) await api.put('/groups/' + id, body);
+                else await api.post('/groups', body);
+            }, {
+                success: 'Grup salvat.',
+                onSuccess: () => { location.hash = '#/groups'; },
+            });
         });
     },
 
@@ -180,13 +200,17 @@ window.pages.groups = {
         `;
         document.getElementById('addForm').addEventListener('submit', async e => {
             e.preventDefault();
-            await api.post('/groups/' + id + '/members', { member_id: new FormData(e.target).get('member_id') });
-            this.showMembers(id);
+            await runAction(
+                () => api.post('/groups/' + id + '/members', { member_id: new FormData(e.target).get('member_id') }),
+                { success: 'Membru adaugat.', onSuccess: () => this.showMembers(id) }
+            );
         });
         document.querySelectorAll('[data-remove]').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await api.delete('/groups/' + id + '/members/' + btn.dataset.remove);
-                this.showMembers(id);
+                await runAction(
+                    () => api.delete('/groups/' + id + '/members/' + btn.dataset.remove),
+                    { success: 'Membru eliminat.', onSuccess: () => this.showMembers(id) }
+                );
             });
         });
     }

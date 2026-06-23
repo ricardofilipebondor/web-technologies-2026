@@ -1,16 +1,29 @@
 function escapeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value ?? '';
-    return div.innerHTML;
+    return div.innerHTML;   
 }
 
 function showAlert(message, type = 'danger') {
     const box = document.getElementById('flash-alert');
     if (!box) return;
-    box.className = 'alert alert-' + type;
+    if (showAlert._timer) clearTimeout(showAlert._timer);
+    box.className = 'alert toast alert-' + type;
     box.textContent = message;
     box.style.display = 'block';
-    setTimeout(() => { box.style.display = 'none'; }, 4000);
+    showAlert._timer = setTimeout(() => { box.style.display = 'none'; }, 4500);
+}
+
+async function runAction(action, { success = null, error = null, onSuccess = null } = {}) {
+    try {
+        const result = await action();
+        if (success) showAlert(success, 'success');
+        if (onSuccess) await onSuccess(result);
+        return result;
+    } catch (err) {
+        showAlert(error || err.message || 'Eroare la operatie.', 'danger');
+        return null;
+    }
 }
 
 function confirmAction(message) {
@@ -55,4 +68,4 @@ function pageHeader(title, subtitle, toolbarHtml = '') {
         </div>`;
 }
 
-window.utils = { escapeHtml, showAlert, confirmAction, renderTable, pageHeader, labeledField, filterField };
+window.utils = { escapeHtml, showAlert, runAction, confirmAction, renderTable, pageHeader, labeledField, filterField };

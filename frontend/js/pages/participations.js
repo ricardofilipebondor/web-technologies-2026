@@ -26,8 +26,10 @@ window.pages.participations = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/participations/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/participations/' + btn.dataset.delete),
+                    { success: 'Participare stearsa.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -50,9 +52,13 @@ window.pages.participations = {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
             body.punctaj = parseFloat(body.punctaj) || 0;
-            if (id) await api.put('/participations/' + id, body);
-            else await api.post('/participations', body);
-            location.hash = '#/participations';
+            await runAction(async () => {
+                if (id) await api.put('/participations/' + id, body);
+                else await api.post('/participations', body);
+            }, {
+                success: 'Participare salvata.',
+                onSuccess: () => { location.hash = '#/participations'; },
+            });
         });
     },
 
@@ -83,8 +89,10 @@ window.pages.participations = {
         document.getElementById('reportFilter').addEventListener('submit', async e => {
             e.preventDefault();
             const cid = new FormData(e.target).get('competition_id');
-            const r = await api.get('/participations?report=1&competition_id=' + cid);
-            this.renderReport(r);
+            await runAction(
+                () => api.get('/participations?report=1&competition_id=' + cid),
+                { onSuccess: (r) => this.renderReport(r) }
+            );
         });
         document.querySelectorAll('[data-export]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -122,8 +130,10 @@ window.pages.rankings = {
         document.getElementById('rankFilter').addEventListener('submit', async e => {
             e.preventDefault();
             const cid = new FormData(e.target).get('competition_id');
-            const r = await api.get('/rankings?competition_id=' + cid);
-            this.renderRanking(r);
+            await runAction(
+                () => api.get('/rankings?competition_id=' + cid),
+                { onSuccess: (r) => this.renderRanking(r) }
+            );
         });
         document.querySelectorAll('[data-export]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -146,7 +156,7 @@ window.pages.prizes = {
             ${renderTable(['Titlu','Membru','Concurs','Data','Actiuni'], api.items(await api.get('/prizes')), p => `
                 <tr>
                     <td><strong>${escapeHtml(p.titlu)}</strong></td>
-                    <td>${escapeHtml(p.nume + ' ' + p.prenume)}</td>
+                    <td>${escapeHtml((p.nume || p.member_nume || '') + ' ' + (p.prenume || p.member_prenume || ''))}</td>
                     <td>${escapeHtml(p.competition_nume || '—')}</td>
                     <td>${escapeHtml(p.data_acordare)}</td>
                     <td class="actions">
@@ -158,8 +168,10 @@ window.pages.prizes = {
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti?')) return;
-                await api.delete('/prizes/' + btn.dataset.delete);
-                this.showList();
+                await runAction(
+                    () => api.delete('/prizes/' + btn.dataset.delete),
+                    { success: 'Premiu sters.', onSuccess: () => this.showList() }
+                );
             });
         });
     },
@@ -182,9 +194,13 @@ window.pages.prizes = {
         document.getElementById('prizeForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            if (id) await api.put('/prizes/' + id, body);
-            else await api.post('/prizes', body);
-            location.hash = '#/prizes';
+            await runAction(async () => {
+                if (id) await api.put('/prizes/' + id, body);
+                else await api.post('/prizes', body);
+            }, {
+                success: 'Premiu salvat.',
+                onSuccess: () => { location.hash = '#/prizes'; },
+            });
         });
     }
 };

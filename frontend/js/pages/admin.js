@@ -36,26 +36,30 @@ window.pages.admin = {
         document.getElementById('adminUserForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = Object.fromEntries(new FormData(e.target).entries());
-            await api.post('/users', body);
-            showAlert('Utilizator creat.', 'success');
-            this.render();
+            await runAction(
+                () => api.post('/users', body),
+                { success: 'Utilizator creat.', onSuccess: () => this.render() }
+            );
         });
 
         document.querySelectorAll('[data-save-role]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.saveRole;
                 const role = document.querySelector(`[data-role-user="${id}"]`).value;
-                await api.put('/users/' + id, { role });
-                showAlert('Rol actualizat.', 'success');
+                await runAction(
+                    () => api.put('/users/' + id, { role }),
+                    { success: 'Rol actualizat.' }
+                );
             });
         });
 
         document.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirmAction('Stergeti utilizatorul?')) return;
-                await api.delete('/users/' + btn.dataset.delete);
-                showAlert('Utilizator sters.', 'success');
-                this.render();
+                await runAction(
+                    () => api.delete('/users/' + btn.dataset.delete),
+                    { success: 'Utilizator sters.', onSuccess: () => this.render() }
+                );
             });
         });
     }

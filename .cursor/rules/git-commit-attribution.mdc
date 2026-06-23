@@ -1,0 +1,15 @@
+---
+description: Never add AI attribution trailers to git commit messages
+alwaysApply: true
+---
+
+# Git commit messages — no AI attribution
+
+Never add `Co-authored-by`, `Made-with`, `Generated-by`, `Signed-off-by`, or any AI attribution trailers to git commit messages unless I explicitly request it.
+
+This includes lines such as:
+- `Co-authored-by: Cursor <cursoragent@cursor.com>`
+- `Made-with: Cursor`
+- Any similar Cursor or AI co-author / generated-by trailer
+
+Write commit messages as if they are authored only by the human developer working on this project.

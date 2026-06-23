@@ -17,6 +17,14 @@ function confirmAction(message) {
     return window.confirm(message);
 }
 
+async function downloadExport(path, filename) {
+    try {
+        await api.download(path, filename);
+    } catch (err) {
+        showAlert(err.message || 'Eroare la descarcare.', 'danger');
+    }
+}
+
 function renderTable(headers, rows, rowHtml) {
     return `
         <div class="table-wrap">

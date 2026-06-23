@@ -67,7 +67,7 @@ class TeamsApiController
         if (!$team) {
             Response::problem('Echipa negasita.', 404);
         }
-        $data = (new TeamsService())->performanceHistory($id);
+        $data = getTeamDetails($id);
         $data['_links'] = Hateoas::links([
             'self' => '/teams/' . $id,
             'members' => '/teams/' . $id . '/members',

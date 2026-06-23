@@ -158,6 +158,7 @@ window.pages.reimbursements = {
             ${pageHeader('Decont: ' + trip.destinatie, '', `
                 <a href="#/reimbursements" class="btn btn-secondary btn-sm">Inapoi</a>
                 <button type="button" class="btn btn-secondary btn-sm" data-export="csv">Export CSV</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-export="json">Export JSON</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-export="pdf">Export PDF</button>
             `)}
             <div class="card card-body">
@@ -175,7 +176,7 @@ window.pages.reimbursements = {
         document.querySelectorAll('[data-export]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const fmt = btn.dataset.export;
-                api.download('/reimbursements/' + id + '/export?format=' + fmt, 'decont.' + fmt);
+                downloadExport('/reimbursements/' + id + '/export?format=' + fmt, 'decont.' + fmt);
             });
         });
     }

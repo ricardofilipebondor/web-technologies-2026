@@ -6,7 +6,7 @@ class MenuApiController
     {
         AuthMiddleware::requireLogin();
         $items = [];
-        foreach (PluginManager::getMenuItems() as $item) {
+        foreach (getMenuItems() as $item) {
             if (userCanAccess($item['module'])) {
                 $items[] = Hateoas::item($item, '/menu/' . $item['module']);
             }

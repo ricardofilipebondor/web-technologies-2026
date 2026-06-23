@@ -14,32 +14,21 @@ function clearToken() {
 }
 
 async function apiRequest(path, options = {}) {
-    const url = API_BASE + path;
-    const headers = {
-        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-        ...(options.headers || {}),
-    };
+    const headers = { ...(options.headers || {}) };
     const token = getToken();
     if (token) {
         headers.Authorization = 'Bearer ' + token;
     }
-
-    const config = { ...options, headers };
-
-    if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
-        config.body = JSON.stringify(config.body);
+    if (options.body && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(url, config);
+    const response = await fetch(API_BASE + path, { ...options, headers });
     if (response.status === 204) {
-        if (!response.ok) {
-            throw new Error('Eroare la cerere.');
-        }
         return null;
     }
 
     const contentType = response.headers.get('content-type') || '';
-
     if (!contentType.includes('application/json')) {
         if (!response.ok) {
             throw new Error('Eroare la cerere.');
@@ -56,8 +45,8 @@ async function apiRequest(path, options = {}) {
 
 const api = {
     get: (path) => apiRequest(path),
-    post: (path, body) => apiRequest(path, { method: 'POST', body }),
-    put: (path, body) => apiRequest(path, { method: 'PUT', body }),
+    post: (path, body) => apiRequest(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
+    put: (path, body) => apiRequest(path, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (path) => apiRequest(path, { method: 'DELETE' }),
     items: (res) => (res && Array.isArray(res.items) ? res.items : res),
     setToken,
@@ -67,31 +56,30 @@ const api = {
         const token = getToken();
         const headers = token ? { Authorization: 'Bearer ' + token } : {};
         const response = await fetch(API_BASE + path, { headers });
+        const contentType = response.headers.get('content-type') || '';
+        const disposition = response.headers.get('content-disposition') || '';
+        const isAttachment = disposition.includes('attachment');
+
         if (!response.ok) {
+            if (contentType.includes('application/json')) {
+                const data = await response.json();
+                throw new Error(data.detail || data.error || 'Eroare la descarcare.');
+            }
             throw new Error('Eroare la descarcare.');
         }
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || 'export';
-        link.click();
-        URL.revokeObjectURL(url);
-    },
-    upload: async (path, formData) => {
-        const token = getToken();
-        const headers = token ? { Authorization: 'Bearer ' + token } : {};
-        const response = await fetch(API_BASE + path, {
-            method: 'POST',
-            headers,
-            body: formData,
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.detail || data.error || 'Eroare la cerere.');
+        if (!isAttachment && contentType.includes('application/json')) {
+            const data = await response.json();
+            throw new Error(data.detail || data.error || 'Eroare la descarcare.');
         }
-        return data;
+
+        const blob = await response.blob();
+        const match = disposition.match(/filename="?([^";\n]+)"?/i);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = match ? match[1].trim() : (filename || 'export');
+        link.click();
     },
+    upload: (path, formData) => apiRequest(path, { method: 'POST', body: formData }),
 };
 
 window.api = api;

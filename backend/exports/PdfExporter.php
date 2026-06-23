@@ -2,13 +2,20 @@
 
 class PdfExporter
 {
-    public static function generateReport(string $title, array $lines): void
+    public static function generateReport(string $title, array $lines, string $filename = 'raport.pdf'): void
     {
         $content = self::buildContent($title, $lines);
         $pdf = self::createSimplePdf($content);
+        $filename = DataExporter::safeFilename($filename);
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="raport_decont.pdf"');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
         echo $pdf;
         exit;
     }
@@ -30,15 +37,15 @@ class PdfExporter
         $stream = "BT\n/F1 12 Tf\n";
 
         foreach ($lines as $line) {
+            if ($y < 50) {
+                break;
+            }
             if ($line === '') {
                 $y -= 14;
                 continue;
             }
-            $stream .= sprintf("50 %d Td\n(%s) Tj\n0 -16 Td\n", $y, $line);
+            $stream .= sprintf("1 0 0 1 50 %d Tm\n(%s) Tj\n", $y, $line);
             $y -= 16;
-            if ($y < 50) {
-                break;
-            }
         }
 
         $stream .= "ET";

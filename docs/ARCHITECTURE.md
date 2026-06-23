@@ -35,8 +35,8 @@ flowchart TB
         CTRL[Controllers]
         MW[AuthMiddleware + JWT]
         JWT[JwtService]
-        PLG[PluginManager]
-        SVC[Services]
+        CFG[app.php<br/>roluri + meniu]
+        HLP[helpers.php]
         EXP[Exports CSV/JSON/XML/PDF]
     end
 
@@ -48,10 +48,11 @@ flowchart TB
     HTML --> JS
     JS -->|fetch + Bearer JWT| ROUTER --> API --> MW --> CTRL
     MW --> JWT
-    CTRL --> SVC --> MODEL --> DB
+    CFG -.->|permisiuni + meniu| CTRL
+    CTRL --> HLP --> MODEL --> DB
     CTRL --> MODEL
     CTRL --> EXP
-    PLG -.->|meniu pe rol| JS
+    CFG -.->|GET /menu| JS
 ```
 
 ---
@@ -67,11 +68,10 @@ flowchart LR
     R --> A3[DashboardApiController]
     R --> A4[ModuleApiControllers]
     R --> A5[ResourceApiControllers]
-    A2 --> SVC1[MembersService] --> M[Models]
-    A4 --> SVC2[CompetitionsService]
-    A4 --> SVC3[TeamsService]
-    A4 --> SVC4[TripsService]
-    SVC2 & SVC3 & SVC4 --> M
+    A2 --> HLP[helpers.php]
+    A4 --> HLP
+    A5 --> HLP
+    HLP --> M[Models]
     A4 --> M
     A3 --> M
     S2 --> M
@@ -103,6 +103,7 @@ sequenceDiagram
     participant A as api.js
     participant S as server.php
     participant C as MembersApiController
+    participant H as helpers.php
     participant M as Member
     participant DB as SQLite
 
@@ -114,19 +115,21 @@ sequenceDiagram
     C->>C: requireModule members
     C->>M: all()
     M->>DB: SELECT
-    DB-->>P: JSON + _links HATEOAS
+    DB-->>P: JSON items + _links
     P-->>U: tabel HTML
+
+    Note over U,H: Profil membru: GET /members/{id}<br/>C apelează getMemberProfile() din helpers.php
 ```
 
 ---
 
-## 6. Module (15 plugin-uri)
+## 6. Module (15 module UI)
 
-Fiecare modul are un plugin în `backend/plugins/modules/`. Accesul pe rol: `backend/config/app.php`.
+Lista modulelor este definită în `$MENU_ITEMS` din `backend/config/app.php`. Accesul pe rol: `$ROLE_PERMISSIONS` + `userCanAccess()`. Meniul API: `MenuApiController` filtrează elementele după rol.
 
 Dashboard, Members, Coaches, Teams, Groups, Halls, Activities, Competitions, Participations, Rankings, Prizes, Trips, Expenses, Reimbursements, Admin.
 
-Modulul *reimbursements* agregă date din `trips`, `expenses`, `trip_members` (fără tabel propriu).
+Modulul *reimbursements* agregă date din `trips`, `expenses`, `trip_members` (fără tabel propriu). Raportul este construit cu `getTripReport()` din `helpers.php`.
 
 ---
 
@@ -163,7 +166,9 @@ Autentificare **stateless**: `JwtService` (HS256) emite token la `POST /sessions
 - **Reprezentări** JSON directe, fără envelope `{ success, data }`
 - **Erori** RFC 7807: `{ type, title, status, detail }`
 - **HATEOAS**: câmp `_links` pe resurse și colecții (`RestHelper`, `Hateoas`)
-- **Export**: query `?format=csv|json|xml` pe colecții (ex. `GET /members?format=csv`)
+- **Export**: query `?format=csv|json|xml` pe colecții; PDF pe deconturi (`GET /reimbursements/{id}/export?format=pdf`)
+
+Funcția `exportList()` din `helpers.php` centralizează exportul CSV/JSON/XML pentru rapoarte participări și clasamente.
 
 ---
 
@@ -257,9 +262,9 @@ flowchart LR
 | 1 | `database.sql`, `install.php` |
 | 2 | `server.php`, Router, JWT, Auth |
 | 3 | `app.html`, hash router |
-| 4 | 15 plugin-uri |
+| 4 | 15 module CRUD (controllers + pages) |
 | 5 | CSV, JSON, XML, PDF |
-| 6 | `UsersApiController`, permisiuni |
+| 6 | `UsersApiController`, permisiuni în `app.php` |
 | 7 | RAPORT, diagrame, film |
 
 ---
@@ -271,7 +276,9 @@ flowchart LR
 | Entry | `router.php`, `backend/server.php` |
 | Rute | `backend/routes/api.php` |
 | Securitate | `backend/middleware/AuthMiddleware.php`, `backend/services/JwtService.php` |
+| Config + meniu + roluri | `backend/config/app.php` |
+| Funcții reutilizabile | `backend/helpers.php` |
 | REST helpers | `backend/utils/Response.php`, `Hateoas.php`, `RestHelper.php` |
-| Roluri | `backend/config/app.php` |
-| Client | `frontend/js/api.js`, `frontend/js/router.js` |
+| Export | `backend/exports/DataExporter.php`, `PdfExporter.php` |
+| Client | `frontend/js/api.js`, `frontend/js/router.js`, `frontend/js/utils.js` |
 | Schema | `database/schema/database.sql` |

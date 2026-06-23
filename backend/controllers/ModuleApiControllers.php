@@ -143,7 +143,7 @@ class CompetitionsApiController
         if (!Competition::find($id)) {
             Response::problem('Concurs negasit.', 404);
         }
-        $report = (new CompetitionsService())->participationsReport($id);
+        $report = getCompetitionReport($id);
         Response::resource(array_merge($report, [
             '_links' => Hateoas::links(['self' => '/competitions/' . $id . '/report']),
         ]));
@@ -181,6 +181,10 @@ class ParticipationsApiController
 
         $format = $_GET['format'] ?? '';
         if ($format !== '' && isset($_GET['competition_id'])) {
+            $competitionId = (int) ($_GET['competition_id'] ?? 0);
+            if ($competitionId <= 0) {
+                Response::problem('Selectati un concurs pentru export.');
+            }
             $this->exportReport();
             return;
         }
@@ -237,7 +241,7 @@ class ParticipationsApiController
     private function report(): void
     {
         $competitionId = (int) ($_GET['competition_id'] ?? 0);
-        $report = (new CompetitionsService())->participationsReport($competitionId);
+        $report = getCompetitionReport($competitionId);
         Response::resource(array_merge($report, [
             'competitions' => Hateoas::collection(Competition::all(), '/competitions', '/competitions')['items'],
             'competitionId' => $competitionId,
@@ -261,17 +265,14 @@ class ParticipationsApiController
             'loc_obtinut' => $p['loc_obtinut'] ?? '',
         ], $participations);
 
-        $headers = ['participant', 'categorie', 'rating', 'punctaj', 'loc_obtinut'];
-
-        if ($format === 'csv') {
-            $rows = array_map(fn($r) => array_values($r), $data);
-            DataExporter::toCsv($rows, $headers, $filename . '.csv');
-        } elseif ($format === 'json') {
-            DataExporter::toJson($data, $filename . '.json');
-        } elseif ($format === 'xml') {
-            DataExporter::toXml($data, 'raport', 'participare', $filename . '.xml');
-        }
-        Response::problem('Format invalid.');
+        exportList(
+            $format,
+            $data,
+            $filename,
+            ['participant', 'categorie', 'rating', 'punctaj', 'loc_obtinut'],
+            'raport',
+            'participare'
+        );
     }
 }
 
@@ -283,6 +284,10 @@ class RankingsApiController
 
         $format = $_GET['format'] ?? '';
         if ($format !== '') {
+            $competitionId = (int) ($_GET['competition_id'] ?? 0);
+            if ($competitionId <= 0) {
+                Response::problem('Selectati un concurs pentru export.');
+            }
             $this->export();
             return;
         }
@@ -324,15 +329,14 @@ class RankingsApiController
 
         $filename = 'clasament_' . ($competition['nume'] ?? 'concurs');
 
-        if ($format === 'csv') {
-            $rows = array_map(fn($r) => [$r['loc'], $r['participant'], $r['punctaj']], $data);
-            DataExporter::toCsv($rows, ['loc', 'participant', 'punctaj'], $filename . '.csv');
-        } elseif ($format === 'json') {
-            DataExporter::toJson($data, $filename . '.json');
-        } elseif ($format === 'xml') {
-            DataExporter::toXml($data, 'clasament', 'participant', $filename . '.xml');
-        }
-        Response::problem('Format invalid.');
+        exportList(
+            $format,
+            $data,
+            $filename,
+            ['loc', 'participant', 'punctaj'],
+            'clasament',
+            'participant'
+        );
     }
 }
 
@@ -479,7 +483,7 @@ class TripsApiController
     public function report(array $params): void
     {
         AuthMiddleware::requireModule('trips');
-        $report = (new TripsService())->report((int) $params['id']);
+        $report = getTripReport((int) $params['id']);
         if (!$report) {
             Response::problem('Deplasare negasita.', 404);
         }
@@ -548,7 +552,7 @@ class ReimbursementsApiController
     public function show(array $params): void
     {
         AuthMiddleware::requireModule('reimbursements');
-        $report = (new TripsService())->report((int) $params['id']);
+        $report = getTripReport((int) $params['id']);
         if (!$report) {
             Response::problem('Deplasare negasita.', 404);
         }
@@ -592,11 +596,24 @@ class ReimbursementsApiController
             }
             $lines[] = '';
             $lines[] = sprintf('TOTAL GENERAL: %.2f RON', $total);
-            PdfExporter::generateReport('Raport Decont - ' . $trip['destinatie'], $lines);
+            PdfExporter::generateReport(
+                'Raport Decont - ' . $trip['destinatie'],
+                $lines,
+                'decont_' . $tripId . '.pdf'
+            );
         }
 
-        $rows = array_map(fn($e) => [$e['tip'], $e['suma'], $e['observatii'] ?? ''], $expenses);
-        $rows[] = ['TOTAL', $total, ''];
-        DataExporter::toCsv($rows, ['tip', 'suma', 'observatii'], 'decont_' . $tripId . '.csv');
+        if ($format === 'csv') {
+            $rows = array_map(fn($e) => [$e['tip'], $e['suma'], $e['observatii'] ?? ''], $expenses);
+            $rows[] = ['TOTAL', $total, ''];
+            DataExporter::toCsv($rows, ['tip', 'suma', 'observatii'], 'decont_' . $tripId . '.csv');
+        }
+
+        if ($format === 'json') {
+            $report = getTripReport($tripId);
+            DataExporter::toJson($report, 'decont_' . $tripId . '.json');
+        }
+
+        Response::problem('Format invalid.');
     }
 }

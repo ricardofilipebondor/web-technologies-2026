@@ -48,7 +48,7 @@ window.pages.members = {
 
         document.getElementById('memberFilter').addEventListener('submit', e => { e.preventDefault(); this.showList(); });
         container.querySelectorAll('[data-export]').forEach(btn => {
-            btn.addEventListener('click', () => api.download('/members?format=' + btn.dataset.export, 'membri.' + btn.dataset.export));
+            btn.addEventListener('click', () => downloadExport('/members?format=' + btn.dataset.export, 'membri.' + btn.dataset.export));
         });
         container.querySelectorAll('[data-delete]').forEach(btn => {
             btn.addEventListener('click', async () => {

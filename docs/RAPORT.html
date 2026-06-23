@@ -128,7 +128,7 @@
 
         <h2>3. Roluri și permisiuni</h2>
 
-        <p>Definite în <code>backend/config/app.php</code>. Verificare API: <code>AuthMiddleware::requireModule()</code> după validare JWT. Meniu UI: <code>GET /menu</code> (filtrat pe rol).</p>
+        <p>Definite în <code>backend/config/app.php</code> (<code>$ROLE_PERMISSIONS</code>, <code>$MENU_ITEMS</code>). Verificare API: <code>AuthMiddleware::requireModule()</code> după validare JWT. Meniu UI: <code>GET /menu</code> (filtrat pe rol).</p>
 
         <table>
 
@@ -196,7 +196,7 @@
 
             <li>CRUD — <code>/members</code>; categorii: junior, senior, amator, profesionist</li>
 
-            <li>Profil cu participări și premii — <code>MembersService::profile()</code></li>
+            <li>Profil cu participări și premii — <code>getMemberProfile()</code> în <code>backend/helpers.php</code></li>
 
             <li>Import <code>POST /members/imports</code>; export <code>GET /members?format=csv|json|xml</code></li>
 
@@ -254,7 +254,7 @@
 
             <li>Cheltuieli — <code>/expenses</code></li>
 
-            <li>Deconturi (agregare trips + expenses) — <code>/reimbursements</code>; export CSV/PDF</li>
+            <li>Deconturi (agregare trips + expenses) — <code>/reimbursements</code>; export CSV, JSON, PDF</li>
 
         </ul>
 
@@ -290,7 +290,7 @@
 
                 <tr><td>Responsive</td><td>Breakpoints 992px, 768px în <code>style.css</code></td></tr>
 
-                <tr><td>Modularizare</td><td>15 plugin-uri, 4 servicii, 13 modele</td></tr>
+                <tr><td>Modularizare</td><td>15 module UI, <code>helpers.php</code>, 13 modele PDO, controllers REST</td></tr>
 
             </tbody>
 
@@ -318,7 +318,7 @@
 
                 <tr><td>SQLite</td><td><code>database/schema/database.sql</code></td></tr>
 
-                <tr><td>Import/export CSV, JSON</td><td><code>backend/exports/</code></td></tr>
+                <tr><td>Import/export CSV, JSON, XML, PDF</td><td><code>backend/exports/</code>, <code>exportList()</code> în <code>helpers.php</code></td></tr>
 
                 <tr><td>API REST</td><td>Resurse JSON, HATEOAS (<code>_links</code>), coduri HTTP (201/204), erori RFC 7807</td></tr>
 
@@ -376,7 +376,7 @@
 
             <li>Meniu lateral din <code>GET /menu</code>;</li>
 
-            <li>Navigare hash (<code>#/members</code> etc.) fără reîncărcare;</li>
+            <li>Navigare hash (<code>#/members</code> etc.) fără reîncărcare — <code>router.js</code> → <code>window.pages[module]</code>;</li>
 
             <li>Modulele încarcă date via API și afișează tabele/formulare;</li>
 
@@ -398,9 +398,9 @@
 
         <ul>
 
-            <li><code>frontend/</code> — HTML, CSS, JS</li>
+            <li><code>frontend/</code> — HTML, CSS, JS (api.js, router.js, pages)</li>
 
-            <li><code>backend/</code> — server.php, routes, controllers, services, plugins, middleware</li>
+            <li><code>backend/</code> — server.php, routes, controllers, helpers.php, middleware, exports</li>
 
             <li><code>database/</code> — db.php, models/, schema/</li>
 

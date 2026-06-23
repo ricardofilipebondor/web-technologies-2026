@@ -21,28 +21,9 @@ async function initApp() {
 
 function renderSidebar(items) {
     const nav = document.getElementById('sidebarNav');
-    const routeMap = {
-        dashboard: '#/dashboard',
-        members: '#/members',
-        coaches: '#/coaches',
-        teams: '#/teams',
-        groups: '#/groups',
-        halls: '#/halls',
-        activities: '#/activities',
-        competitions: '#/competitions',
-        participations: '#/participations',
-        rankings: '#/rankings',
-        prizes: '#/prizes',
-        trips: '#/trips',
-        expenses: '#/expenses',
-        reimbursements: '#/reimbursements',
-        admin: '#/admin',
-    };
-
-    nav.innerHTML = items.map(item => {
-        const hash = routeMap[item.module] || '#/' + item.module;
-        return `<li><a class="sidebar-link" href="${hash}" data-module="${item.module}">${escapeHtml(item.label)}</a></li>`;
-    }).join('');
+    nav.innerHTML = items.map(item => `
+        <li><a class="sidebar-link" href="#/${item.module}" data-module="${item.module}">${escapeHtml(item.label)}</a></li>
+    `).join('');
 }
 
 function initSidebarToggle() {

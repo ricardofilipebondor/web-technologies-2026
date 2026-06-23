@@ -23,7 +23,7 @@ class MembersApiController
     public function show(array $params): void
     {
         AuthMiddleware::requireModule('members');
-        $profile = (new MembersService())->profile((int) $params['id']);
+        $profile = getMemberProfile((int) $params['id']);
         if (!$profile) {
             Response::problem('Membru negasit.', 404);
         }
@@ -125,17 +125,17 @@ class MembersApiController
     {
         $members = Member::all();
 
-        if ($format === 'csv') {
+        if ($format === 'json') {
+            DataExporter::toJson($members, 'membri.json');
+        } elseif ($format === 'xml') {
+            DataExporter::toXml($members, 'members', 'member', 'membri.xml');
+        } elseif ($format === 'csv') {
             $rows = array_map(fn($m) => [
                 $m['id'], $m['nume'], $m['prenume'], $m['data_nasterii'],
                 $m['email'], $m['telefon'], $m['categorie'], $m['rating'],
                 $m['adresa'], $m['coach_id'] ?? '',
             ], $members);
             DataExporter::toCsv($rows, ['id','nume','prenume','data_nasterii','email','telefon','categorie','rating','adresa','coach_id'], 'membri.csv');
-        } elseif ($format === 'json') {
-            DataExporter::toJson($members, 'membri.json');
-        } elseif ($format === 'xml') {
-            DataExporter::toXml($members, 'members', 'member', 'membri.xml');
         }
         Response::problem('Format invalid.');
     }

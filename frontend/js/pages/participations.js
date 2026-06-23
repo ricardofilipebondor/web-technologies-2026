@@ -89,7 +89,7 @@ window.pages.participations = {
         document.querySelectorAll('[data-export]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const fmt = btn.dataset.export;
-                api.download('/participations?competition_id=' + d.competitionId + '&format=' + fmt, 'raport.' + fmt);
+                downloadExport('/participations?competition_id=' + d.competitionId + '&format=' + fmt, 'raport.' + fmt);
             });
         });
     }
@@ -128,7 +128,7 @@ window.pages.rankings = {
         document.querySelectorAll('[data-export]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const fmt = btn.dataset.export;
-                api.download('/rankings?competition_id=' + d.competitionId + '&format=' + fmt, 'clasament.' + fmt);
+                downloadExport('/rankings?competition_id=' + d.competitionId + '&format=' + fmt, 'clasament.' + fmt);
             });
         });
     }

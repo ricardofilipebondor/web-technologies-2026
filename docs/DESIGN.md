@@ -4,7 +4,7 @@ Fișiere: `frontend/app.html`, `frontend/index.html`, `frontend/css/style.css`, 
 
 ## Layout
 
-App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /menu` și afișează doar modulele permise rolului curent (`backend/config/app.php`).
+App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /menu` (filtrat pe rol din `backend/config/app.php`) și afișează doar modulele permise. Fiecare element are `module` și `label`; link-ul hash este `#/{module}`.
 
 ## Stil
 
@@ -21,10 +21,10 @@ App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /m
 
 ## Interacțiune
 
-- Navigare hash (`#/members`, `#/dashboard`) fără reîncărcare pagină.
+- Navigare hash (`#/members`, `#/dashboard`) fără reîncărcare pagină; `router.js` apelează `window.pages[module].render()`.
 - Date încărcate asincron cu `fetch`; token JWT în `localStorage`, trimis ca `Authorization: Bearer`.
-- Export fișiere prin `api.download()` (autentificat).
-- Mesaje flash la salvare, ștergere, import.
+- Export fișiere prin `downloadExport()` → `api.download()` (autentificat, cu mesaje de eroare în UI).
+- Mesaje flash la salvare, ștergere, import (`showAlert()` din `utils.js`).
 
 ## Accesibilitate
 
@@ -44,10 +44,10 @@ App shell cu sidebar fix și zonă de conținut. Meniul lateral vine din `GET /m
 | `#/groups` | `pages/teams.js` | Grupe |
 | `#/halls` | `pages/halls.js` | Săli, intervale orare |
 | `#/activities` | `pages/halls.js` | Activități |
-| `#/participations` | `pages/participations.js` | Participări |
+| `#/participations` | `pages/participations.js` | Participări, raport |
 | `#/rankings` | `pages/participations.js` | Clasamente |
 | `#/prizes` | `pages/participations.js` | Premii |
 | `#/trips` | `pages/trips.js` | Deplasări |
 | `#/expenses` | `pages/trips.js` | Cheltuieli |
-| `#/reimbursements` | `pages/trips.js` | Deconturi |
+| `#/reimbursements` | `pages/trips.js` | Deconturi, export CSV/JSON/PDF |
 | `#/admin` | `pages/admin.js` | Utilizatori, roluri |

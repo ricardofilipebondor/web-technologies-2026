@@ -48,3 +48,4 @@ docs/         RAPORT.html, ARCHITECTURE.md, DESIGN.md
 | [docs/RAPORT.html](docs/RAPORT.html) | Cerințe funcționale și tehnice |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arhitectură C4, ER, flux Ajax, etape dezvoltare |
 | [docs/DESIGN.md](docs/DESIGN.md) | Design UI responsive |
+| [Video demonstrație (Google Drive)](https://drive.google.com/file/d/1uCbAkeCKgMQj4y6krD8_pOES3L6RFXVv/view?usp=sharing) | Film demonstrativ al aplicației |

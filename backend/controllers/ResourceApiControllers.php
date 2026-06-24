@@ -346,11 +346,20 @@ class HallsApiController
             Response::problem('Sala negasita.', 404);
         }
         $body = AuthMiddleware::getJsonBody();
+        $zi = trim($body['zi_saptamana'] ?? '');
+        $oraStart = trim($body['ora_start'] ?? '');
+        $oraEnd = trim($body['ora_end'] ?? '');
+
+        $error = HallSlot::validateNewSlot($hallId, $zi, $oraStart, $oraEnd);
+        if ($error) {
+            Response::problem($error, str_contains($error, 'suprapune') ? 409 : 400);
+        }
+
         $slotId = HallSlot::create([
             'hall_id' => $hallId,
-            'zi_saptamana' => trim($body['zi_saptamana'] ?? ''),
-            'ora_start' => trim($body['ora_start'] ?? ''),
-            'ora_end' => trim($body['ora_end'] ?? ''),
+            'zi_saptamana' => $zi,
+            'ora_start' => HallSlot::normalizeTime($oraStart),
+            'ora_end' => HallSlot::normalizeTime($oraEnd),
         ]);
         $slot = HallSlot::byHall($hallId);
         $created = array_values(array_filter($slot, fn($s) => (int) $s['id'] === $slotId))[0] ?? ['id' => $slotId];

@@ -80,6 +80,10 @@ class ActivitiesApiController
         if (Activity::hasCoachConflict($data['coach_id'], $data['data_start'], $data['data_end'], $excludeId)) {
             return 'Eroare: Antrenorul este deja alocat unei alte activitati in acelasi interval.';
         }
+        $slotError = HallSlot::fitsHallSchedule($data['hall_id'], $data['data_start'], $data['data_end']);
+        if ($slotError) {
+            return $slotError;
+        }
         return null;
     }
 }

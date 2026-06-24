@@ -1,0 +1,8 @@
+nume,prenume,data_nasterii,email,telefon,categorie,rating,adresa,coach_id
+Toma,Andrei,2013-01-20,andrei.toma@email.ro,0732000001,junior,1200,"Str. Marului 4, Bucuresti",1
+Lupu,Ioana,2009-08-14,ioana.lupu@email.ro,0732000002,junior,1480,"Str. Viorelelor 9, Cluj",1
+Crisan,Robert,1994-05-03,robert.crisan@email.ro,0732000003,senior,1780,"Bd. Decebal 12, Timisoara",2
+Moldovan,Simona,1985-11-27,simona.m@email.ro,0732000004,amator,1550,"Str. Salcamilor 18, Brasov",2
+Pavel,Dan,1976-02-10,dan.pavel@email.ro,0732000005,profesionist,2050,"Str. Republicii 33, Bucuresti",3
+Olteanu,Maria,2011-12-05,,0732000006,junior,1320,"Str. Liliacului 2, Iasi",
+Neagu,Petru,1990-07-19,petru.neagu@email.ro,,amator,1600,"Str. Padurii 7, Constanta",4

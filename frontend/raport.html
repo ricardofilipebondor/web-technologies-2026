@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Scholarly HTML: eSC — Chess Club Manager</title>
+    <link rel="stylesheet" href="https://w3c.github.io/scholarly-html/css/scholarly.min.css">
+</head>
+<body prefix="schema: http://schema.org">
+    <header>
+        <div class="banner">
+            <img src="https://w3c.github.io/scholarly-html/scholarly-html.svg" width="227" height="50" alt="Scholarly HTML logo">
+            <div class="status">System Requirements Specification</div>
+        </div>
+        <h1 property="schema:name">eSC — Chess Club Manager</h1>
+    </header>
+
+    <div role="contentinfo">
+        <dl>
+            <dt>Autori</dt>
+            <dd>
+                <span typeof="schema:Person">
+                    <meta property="schema:givenName" content="Ricardo">
+                    <meta property="schema:familyName" content="Bondor">
+                    <span property="schema:name">Ricardo Bondor</span>
+                </span>
+            </dd>
+            <dd>
+                <span typeof="schema:Person">
+                    <meta property="schema:givenName" content="Eduard">
+                    <meta property="schema:familyName" content="Ozarchevici">
+                    <span property="schema:name">Eduard Ozarchevici</span>
+                </span>
+            </dd>
+            <dt>Licență</dt>
+            <dd>
+                <a href="https://opensource.org/licenses/MIT" property="schema:license">MIT License</a>
+            </dd>
+        </dl>
+    </div>
+
+    <section typeof="sa:Abstract" id="abstract" role="doc-abstract">
+        <h2>Abstract</h2>
+        <p>Acest document reprezintă specificarea cerințelor sistemului (SRS) conform standardului IEEE pentru aplicația Web <strong>eSC (Chess Club Manager)</strong>. Aplicația servește ca platformă centralizată pentru digitalizarea proceselor administrative, sportive și financiare din cadrul unui club de șah, oferind arhitectură API RESTful stateless pe backend (PHP) și un Single-Page Application pe frontend (Vanilla JS).</p>
+    </section>
+
+    <section id="introduction" role="doc-introduction">
+        <h2>1. Introducere</h2>
+        
+        <section id="purpose">
+            <h3>1.1 Scopul documentului</h3>
+            <p>Scopul acestui document este de a descrie în detaliu cerințele funcționale și non-funcționale ale sistemului eSC. Documentul este destinat echipei de dezvoltare, profesorilor evaluatori și administratorilor viitori ai sistemului pentru a asigura o înțelegere comună a capabilităților platformei.</p>
+        </section>
+
+        <section id="scope">
+            <h3>1.2 Domeniul de aplicare</h3>
+            <p>Sistemul eSC va gestiona operațiunile interne ale clubului: evidența membrilor, organizarea antrenamentelor, rezervarea sălilor, participarea la competiții și decontarea cheltuielilor de deplasare. Sistemul elimină procesele bazate pe hârtie, automatizează verificarea conflictelor logistice și oferă exporturi de date în formate deschise (CSV, JSON, XML, PDF).</p>
+        </section>
+    </section>
+
+    <section id="overall-description">
+        <h2>2. Descriere Generală</h2>
+
+        <section id="product-perspective">
+            <h3>2.1 Perspectiva produsului</h3>
+            <p>eSC este un sistem de tip monolit modular, self-contained, fără framework-uri externe. Frontend-ul interacționează asincron via AJAX cu un server backend PHP, care persistă datele într-o bază de date relațională SQLite locală. Sistemul este complet decuplat, comunicarea realizându-se exclusiv prin JSON.</p>
+        </section>
+
+        <section id="user-classes">
+            <h3>2.2 Clase de utilizatori și permisiuni</h3>
+            <ul>
+                <li><strong>Administrator:</strong> Acces complet la toate cele 15 module, inclusiv managementul utilizatorilor și al rolurilor.</li>
+                <li><strong>Antrenor:</strong> Acces la gestionarea membrilor, echipelor, grupelor, competițiilor și rezervarea intervalelor orare în săli.</li>
+                <li><strong>Responsabil Financiar:</strong> Acces restricționat strict la modulele de deplasări, cheltuieli și deconturi.</li>
+            </ul>
+        </section>
+    </section>
+
+    <section id="system-features">
+        <h2>3. Funcționalități ale Sistemului</h2>
+
+        <section id="feature-members">
+            <h3>3.1 Gestionarea Entităților Umane</h3>
+            <p>Sistemul permite operațiuni CRUD pentru antrenori și membri. Membrii sunt clasificați în funcție de nivel. Se permite importul în masă prin fișiere și exportul datelor. Profilul unui membru expune automat istoricul competițional agregat și premiile obținute.</p>
+        </section>
+
+        <section id="feature-logistics">
+            <h3>3.2 Gestionarea Logistică</h3>
+            <p>Alocarea resurselor spațiale pentru antrenamente, cursuri și workshop-uri. Sistemul previne automat suprapunerile validând disponibilitatea sălii și a antrenorului pentru un interval orar specificat direct la nivel de model de date.</p>
+        </section>
+
+        <section id="feature-competitions">
+            <h3>3.3 Competiții și Echipe</h3>
+            <p>Formarea echipelor și gestionarea participărilor la competiții externe sau interne. Funcționalitatea include generarea automată a clasamentelor și alocarea premiilor către membrii sau echipele participante, cu posibilitatea extragerii de rapoarte de performanță.</p>
+        </section>
+
+        <section id="feature-financial">
+            <h3>3.4 Deplasări și Deconturi</h3>
+            <p>Modul destinat responsabilului financiar pentru planificarea deplasărilor și agregarea costurilor logistice (transport, cazare). Costurile sunt asociate participărilor, generând deconturi oficiale exportabile în format PDF.</p>
+        </section>
+    </section>
+
+    <section id="non-functional">
+        <h2>4. Cerințe Non-Funcționale și Tehnice</h2>
+
+        <section id="security">
+            <h3>4.1 Securitate și Autentificare</h3>
+            <ul>
+                <li><strong>Autentificare Stateless (JWT):</strong> Identificarea utilizatorilor se realizează prin JSON Web Tokens (algoritm HS256). Token-ul este stocat pe client în <code>localStorage</code> și este atașat fiecărei cereri HTTP în header-ul <code>Authorization: Bearer</code>.</li>
+                <li><strong>Autorizare:</strong> Middleware-uri backend (RBAC) interceptează cererile, decodifică JWT-ul, verifică integritatea semnăturii și validează accesul pe baza rolului conținut în payload.</li>
+                <li><strong>Protecție date:</strong> Utilizarea de PDO Prepared Statements previne atacurile SQL Injection. Protecția XSS este asigurată pe client prin funcții de evadare a caracterelor (<code>escapeHtml</code>) la injectarea datelor în DOM.</li>
+            </ul>
+        </section>
+
+        <section id="software-quality">
+            <h3>4.2 Arhitectură și Calitate Software</h3>
+            <ul>
+                <li><strong>Arhitectură Client:</strong> Single-Page Application (SPA) folosind Vanilla JavaScript, navigare asincronă pe bază de Hash Routing.</li>
+                <li><strong>Arhitectură Server:</strong> API REST pur, respectând constrângerile de uniform interface, oferind răspunsuri JSON, utilizând corect metodele HTTP (GET, POST, PUT, DELETE) și implementând coduri standard pentru erori (RFC 7807).</li>
+                <li><strong>UI/UX:</strong> Interfață responsivă, scalabilă pe dispozitive mobile, bazată pe tehnici moderne CSS (Flexbox/Grid).</li>
+            </ul>
+        </section>
+    </section>
+
+    <section id="data-model">
+        <h2>5. Modelul Datelor</h2>
+        <p>Persistența este asigurată de SQLite. Schema conține 18 tabele relaționale normalizate. Intersecțiile de tip Many-to-Many specifice domeniului sportiv sunt rezolvate prin tabele de joncțiune (<code>team_members</code>, <code>group_members</code>, <code>trip_members</code>). Baza de date nu se bazează pe API-uri externe pentru stocarea resurselor esențiale.</p>
+    </section>
+
+    <section id="deliverables">
+        <h2>6. Livrabile</h2>
+        <ul>
+            <li>Raport cerințe arhitecturale (format curent).</li>
+            <li>Documentație Design UI și Arhitectură C4 (fișiere Markdown).</li>
+            <li>Cod sursă complet funcțional publicat pe GitHub.</li>
+            <li>Demonstrație video a fluxurilor de execuție.</li>
+        </ul>
+    </section>
+</body>
+</html>

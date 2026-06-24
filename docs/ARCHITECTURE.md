@@ -23,36 +23,31 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    subgraph CLIENT[Browser]
-        HTML[HTML static<br/>index.html, app.html]
-        JS[JavaScript<br/>api.js, router.js, pages]
-        CSS[CSS responsive<br/>style.css]
+    %% Stiluri pentru a imita culorile standard C4 Model
+    classDef container fill:#438dd5,color:#fff,stroke:#31669a,stroke-width:2px
+    classDef db fill:#2b5797,color:#fff,stroke:#204172,stroke-width:2px
+    classDef boundary stroke:#666,stroke-dasharray: 5 5,fill:none
+
+    %% Actorii L1 pot fi inclusi sumar pentru context
+    USER((Utilizator\nClub de Șah))
+
+    subgraph ENV_BROWSER [Mediul Client - Browser Web]
+        SPA["Single-Page Application\n[HTML, CSS, Vanilla JS]\n\nOferă interfața grafică interactivă, rutează paginile local și validează datele înainte de trimitere."]:::container
     end
 
-    subgraph SERVER[PHP built-in server]
-        ROUTER[router.php]
-        API[backend/server.php]
-        CTRL[Controllers]
-        MW[AuthMiddleware + JWT]
-        JWT[JwtService]
-        CFG[app.php<br/>roluri + meniu]
-        HLP[helpers.php]
-        EXP[Exports CSV/JSON/XML/PDF]
+    subgraph ENV_SERVER [Mediul Server]
+        BACKEND["Monolithic Web App & API\n[PHP 8]\n\nRol dublu: Servește fișierele statice inițiale și funcționează ca API REST (JSON) pentru logica de business."]:::container
+        DATABASE[("Bază de Date\n[SQLite]\n\nStochează utilizatorii, rolurile, sălile, activitățile și rapoartele financiare.")]:::db
     end
 
-    subgraph DATA[Persistență]
-        MODEL[Models PDO]
-        DB[(SQLite)]
-    end
+    %% Relatiile
+    USER -- "Interacționează cu" --> SPA
+    SPA -- "1. Cere fișiere statice (index.html)\n2. Apelează endpoint-uri API [JSON/HTTP]" --> BACKEND
+    BACKEND -- "Citește și scrie date [PDO]" --> DATABASE
 
-    HTML --> JS
-    JS -->|fetch + Bearer JWT| ROUTER --> API --> MW --> CTRL
-    MW --> JWT
-    CFG -.->|permisiuni + meniu| CTRL
-    CTRL --> HLP --> MODEL --> DB
-    CTRL --> MODEL
-    CTRL --> EXP
-    CFG -.->|GET /menu| JS
+    %% Aplicarea stilurilor de limite
+    class ENV_BROWSER boundary
+    class ENV_SERVER boundary
 ```
 
 ---
